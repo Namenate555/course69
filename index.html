@@ -1,0 +1,1189 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ระบบกรอกรายละเอียดรายวิชา (AUN-QA)</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;500;600;700&family=Trirong:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#1b2733; --ink-soft:#43566b; --paper:#f6f4ee; --card:#ffffff;
+    --line:#d9dde3; --line-strong:#b9c2cc;
+    --teal:#0f5f63; --teal-d:#0a474a; --gold:#b8862f; --gold-l:#f3e8cf;
+    --grey-input:#eef0f3; --grey-input-focus:#e3ecec;
+    --auto:#fbfaf6; --good:#157347; --bad:#b3261e; --warn:#9a6b00;
+    --radius:7px; --shadow:0 1px 2px rgba(20,30,40,.06),0 8px 24px rgba(20,30,40,.05);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{font-family:'Sarabun',system-ui,sans-serif;color:var(--ink);background:var(--paper);font-size:15px;line-height:1.5}
+  h1,h2,h3{font-family:'Trirong',serif;font-weight:600;color:var(--teal-d);margin:0}
+  /* Header */
+  header.topbar{position:sticky;top:0;z-index:50;background:var(--teal-d);color:#fff;
+    border-bottom:3px solid var(--gold)}
+  .topbar .wrap{max-width:1280px;margin:0 auto;padding:14px 20px;display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+  .brand{display:flex;flex-direction:column;gap:1px}
+  .brand .ey{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-l);font-weight:600}
+  .brand h1{color:#fff;font-size:20px;line-height:1.1}
+  .topbar .spacer{flex:1}
+  .scheme-pill{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.18);
+    padding:6px 10px;border-radius:30px;font-size:13px}
+  .scheme-pill label{cursor:pointer;padding:4px 11px;border-radius:20px;color:#dfe9e9;transition:.15s;font-weight:500}
+  .scheme-pill input{display:none}
+  .scheme-pill input:checked + label{background:var(--gold);color:#3a2a06;font-weight:700}
+  .hbtn{background:rgba(255,255,255,.1);border:1px solid rgba(255,255,255,.22);color:#fff;padding:8px 13px;border-radius:6px;
+    font-family:inherit;font-size:13px;cursor:pointer;font-weight:500;transition:.15s;white-space:nowrap}
+  .hbtn:hover{background:rgba(255,255,255,.2)}
+  .hbtn.gold{background:var(--gold);border-color:var(--gold);color:#3a2a06;font-weight:700}
+  .hbtn.gold:hover{background:#caa047}
+  /* Tabs */
+  nav.tabs{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:62px;z-index:40}
+  nav.tabs .wrap{max-width:1280px;margin:0 auto;padding:0 14px;display:flex;gap:2px;overflow-x:auto}
+  nav.tabs button{background:none;border:none;border-bottom:3px solid transparent;padding:13px 16px;font-family:inherit;
+    font-size:14.5px;font-weight:600;color:var(--ink-soft);cursor:pointer;white-space:nowrap;display:flex;align-items:center;gap:7px}
+  nav.tabs button .num{font-size:11px;background:var(--grey-input);color:var(--ink-soft);border-radius:50%;width:20px;height:20px;
+    display:grid;place-items:center;font-weight:700}
+  nav.tabs button.active{color:var(--teal);border-bottom-color:var(--gold)}
+  nav.tabs button.active .num{background:var(--teal);color:#fff}
+  /* Layout */
+  main{max-width:1280px;margin:0 auto;padding:22px 18px 90px}
+  .panel{display:none;animation:fade .25s ease}
+  .panel.active{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:22px;margin-bottom:20px}
+  .card > h2{font-size:18px;display:flex;align-items:center;gap:10px;margin-bottom:4px}
+  .card > h2 .aun{font-family:'Sarabun';font-size:11px;font-weight:600;background:var(--gold-l);color:var(--gold);
+    padding:3px 9px;border-radius:20px;letter-spacing:.02em}
+  .card .sub{color:var(--ink-soft);font-size:13.5px;margin:2px 0 18px}
+  .sec-eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:6px}
+  /* Form fields */
+  .grid{display:grid;gap:14px}
+  .g2{grid-template-columns:repeat(2,1fr)} .g3{grid-template-columns:repeat(3,1fr)} .g4{grid-template-columns:repeat(4,1fr)}
+  .field{display:flex;flex-direction:column;gap:5px}
+  .field label{font-size:12.5px;font-weight:600;color:var(--ink-soft)}
+  .field .hint{font-size:11.5px;color:#8a97a4;font-weight:400}
+  input,select,textarea{font-family:inherit;font-size:14px;color:var(--ink);background:var(--grey-input);
+    border:1px solid var(--line);border-radius:6px;padding:9px 11px;width:100%;transition:.12s}
+  textarea{resize:vertical;min-height:64px;line-height:1.55}
+  input:focus,select,textarea:focus{outline:none;border-color:var(--teal);background:var(--grey-input-focus);
+    box-shadow:0 0 0 3px rgba(15,95,99,.1)}
+  select{cursor:pointer}
+  /* the "grey box = please fill" cue */
+  .auto-field input,.auto-field select,.auto-cell{background:var(--auto)!important;color:var(--ink-soft);border-style:dashed}
+  .legend{display:flex;gap:18px;flex-wrap:wrap;font-size:12px;color:var(--ink-soft);margin-bottom:14px}
+  .legend span{display:flex;align-items:center;gap:7px}
+  .swatch{width:15px;height:15px;border-radius:3px;border:1px solid var(--line)}
+  .swatch.fill{background:var(--grey-input)} .swatch.calc{background:var(--auto);border-style:dashed}
+  /* Tables */
+  .tbl-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:#fff}
+  table{border-collapse:collapse;width:100%;font-size:13px}
+  th,td{border:1px solid var(--line);padding:6px 8px;text-align:left;vertical-align:top}
+  thead th{background:var(--teal-d);color:#fff;font-weight:600;font-size:12px;position:sticky;top:0;white-space:nowrap}
+  tbody tr:nth-child(even){background:#fbfcfc}
+  td input,td select,td textarea{background:var(--grey-input);border:1px solid #cfd6dd;border-radius:4px;padding:5px 6px;font-size:13px;min-height:auto}
+  td textarea{min-height:34px}
+  td.calc,td.calc input{background:var(--auto);color:var(--ink-soft)}
+  td.idx{text-align:center;font-weight:600;color:var(--ink-soft);background:#f1f3f5}
+  .num-cell input{text-align:center}
+  .row-del{background:#fff;border:1px solid var(--line);color:var(--bad);border-radius:5px;cursor:pointer;
+    width:26px;height:26px;font-size:15px;line-height:1}
+  .row-del:hover{background:#fdeceb}
+  .addrow{margin-top:12px;background:var(--teal);color:#fff;border:none;border-radius:6px;padding:9px 16px;font-family:inherit;
+    font-weight:600;font-size:13.5px;cursor:pointer}
+  .addrow:hover{background:var(--teal-d)}
+  .grade-badge{font-weight:700;text-align:center}
+  .ok{color:var(--good)} .no{color:var(--bad)}
+  .sumbar{display:flex;align-items:center;gap:12px;margin-top:12px;padding:11px 15px;border-radius:7px;background:#f1f3f5;font-size:14px}
+  .sumbar.warn{background:#fff6e6;color:var(--warn)} .sumbar.good{background:#eaf6ee;color:var(--good)}
+  .sumbar b{font-size:16px}
+  .note-box{background:var(--gold-l);border:1px solid #e6d3a3;border-radius:7px;padding:12px 14px;font-size:13px;color:#6a4e10;margin-bottom:18px}
+  .note-box b{color:#5a4106}
+  .objgrid{display:grid;grid-template-columns:auto 1fr;gap:8px 12px;align-items:center}
+  .objgrid .ono{font-weight:700;color:var(--gold);font-size:14px}
+  .pill-mini{font-size:11px;padding:2px 8px;border-radius:12px;background:var(--grey-input);color:var(--ink-soft);font-weight:600}
+  .empty-hint{padding:30px;text-align:center;color:#8a97a4;font-size:13.5px}
+  .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--ink);color:#fff;
+    padding:12px 20px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:.3s;z-index:100;box-shadow:var(--shadow)}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+  .post-act{display:grid;grid-template-columns:200px 90px 1fr;gap:10px;align-items:start;padding:12px 0;border-bottom:1px dashed var(--line)}
+  .post-act .lbl{font-weight:600;color:var(--ink-soft);font-size:13.5px;padding-top:8px}
+  @media(max-width:860px){.g2,.g3,.g4{grid-template-columns:1fr}.post-act{grid-template-columns:1fr}}
+  footer{text-align:center;color:#9aa6b1;font-size:12px;padding:20px}
+  .small-action{font-size:12.5px;color:var(--teal);background:none;border:none;cursor:pointer;font-family:inherit;font-weight:600;text-decoration:underline}
+  .course-tag{color:#fff;font-size:13px;font-weight:600;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);padding:6px 12px;border-radius:20px;max-width:280px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .course-tag:empty{display:none}
+  .readme-cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:6px}
+  ol.flow{margin:6px 0 0;padding-left:22px;line-height:2}
+  ol.flow li{padding-left:4px}
+  .modal-overlay{position:fixed;inset:0;background:rgba(15,25,35,.55);z-index:200;display:none;align-items:flex-start;justify-content:center;padding:60px 16px;overflow:auto}
+  .modal-overlay.show{display:flex}
+  .modal{background:#fff;border-radius:12px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:100%;max-width:680px;padding:24px}
+  .modal-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+  .modal-x{background:none;border:none;font-size:28px;line-height:1;color:#9aa6b1;cursor:pointer}
+  .lib-actions{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
+  .lib-list{display:flex;flex-direction:column;gap:10px}
+  .lib-item{border:1px solid var(--line);border-radius:9px;padding:12px 14px;display:flex;align-items:center;gap:12px}
+  .lib-item .info{flex:1;min-width:0}
+  .lib-item .nm{font-weight:700;color:var(--teal-d)}
+  .lib-item .meta2{font-size:12.5px;color:var(--ink-soft);margin-top:2px}
+  .lib-item .bset{display:flex;gap:6px;flex-shrink:0}
+  .lib-btn{border:1px solid var(--line);background:#fff;border-radius:6px;padding:7px 12px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer}
+  .lib-btn.load{background:var(--teal);color:#fff;border-color:var(--teal)}
+  .lib-btn.del{color:var(--bad)}
+  .lib-empty{padding:24px;text-align:center;color:#8a97a4;font-size:13.5px}
+  /* Evaluation data grid: scroll inside, freeze header + identity columns */
+  #evalwrap{max-height:72vh;overflow:auto}
+  #evaltable{border-collapse:separate;border-spacing:0;border-left:1px solid var(--line);border-top:1px solid var(--line)}
+  #evaltable th,#evaltable td{border:0;border-right:1px solid var(--line);border-bottom:1px solid var(--line)}
+  #evaltable thead th{position:sticky;top:0;z-index:5;background:var(--teal-d)}
+  #evaltable .c0,#evaltable .c1,#evaltable .c2,#evaltable .cf{position:sticky;z-index:2}
+  #evaltable .c0{left:0;width:46px;min-width:46px}
+  #evaltable .c1{left:46px;width:118px;min-width:118px}
+  #evaltable .c2{left:164px;width:178px;min-width:178px}
+  #evaltable .cf{left:0;z-index:4}
+  #evaltable tbody td.c1,#evaltable tbody td.c2{background:#fff}
+  #evaltable tbody tr:nth-child(even) td.c1,#evaltable tbody tr:nth-child(even) td.c2{background:#fbfcfc}
+  #evaltable tbody td.c0{background:#f1f3f5}
+  #evaltable thead th.c0,#evaltable thead th.c1,#evaltable thead th.c2{z-index:6}
+  #evaltable tfoot td{position:sticky;bottom:0;z-index:3;background:#eef1f4}
+  #evaltable tfoot td.cf{z-index:5}
+  details.bulk{border:1px solid var(--line);border-radius:8px;margin-bottom:16px;background:#fbfcfc;overflow:hidden}
+  details.bulk summary{cursor:pointer;padding:12px 16px;font-weight:600;font-size:14px;color:var(--teal);list-style:none;user-select:none}
+  details.bulk summary::-webkit-details-marker{display:none}
+  details.bulk[open] summary{border-bottom:1px solid var(--line);background:#f1f6f6}
+  .bulk-body{padding:14px 16px}
+  .bulk-hint{font-size:13px;margin:0 0 10px;line-height:1.6}
+  #bulkbox{font-family:'Sarabun',monospace;white-space:pre;overflow-wrap:normal;overflow-x:auto}
+  .bulk-actions{display:flex;align-items:center;gap:16px;margin-top:12px;flex-wrap:wrap;font-size:13.5px}
+  .bulk-actions label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--ink-soft);font-weight:500}
+  .bulk-actions input[type=radio]{width:auto;margin:0}
+</style>
+</head>
+<body>
+<header class="topbar">
+  <div class="wrap">
+    <div class="brand">
+      <span class="ey">AUN-QA v4.0 · ปีการศึกษา 2569</span>
+      <h1>ระบบกรอกรายละเอียดรายวิชา</h1>
+    </div>
+    <div class="spacer"></div>
+    <span id="course-tag" class="course-tag" title="รายวิชาที่กำลังกรอก"></span>
+    <div class="scheme-pill" title="เลือกเกณฑ์การตัดเกรดของรายวิชา">
+      <span style="color:#d9e6e6">เกณฑ์เกรด:</span>
+      <input type="radio" name="scheme" id="sch50" value="F50" checked onchange="setScheme('F50')"><label for="sch50">F &lt; 50</label>
+      <input type="radio" name="scheme" id="sch40" value="F40" onchange="setScheme('F40')"><label for="sch40">F &lt; 40</label>
+    </div>
+    <button class="hbtn" onclick="openLibrary()">🗂 คลังรายวิชา</button>
+    <button class="hbtn" onclick="saveProject()">💾 บันทึกไฟล์</button>
+    <button class="hbtn" onclick="document.getElementById('loadfile').click()">📂 เปิดไฟล์</button>
+    <input type="file" id="loadfile" accept=".json" style="display:none" onchange="loadProject(event)">
+    <button class="hbtn gold" onclick="exportExcel()">⬇ Excel</button>
+    <button class="hbtn gold" onclick="exportWord()">⬇ Word</button>
+    <button class="hbtn" onclick="submitCentral()" title="ส่งสำเนาข้อมูลรายวิชานี้เข้าระบบกลางของหน่วยงาน">☁ ส่งเข้าระบบกลาง</button>
+    <button class="hbtn" onclick="openInbox()" title="ดูรายการรายวิชาที่ส่งเข้าระบบกลาง (แอดมินเห็นทั้งหมด)">📥 รายการที่ส่งเข้ามา</button>
+  </div>
+</header>
+
+<nav class="tabs"><div class="wrap" id="tabbar"></div></nav>
+
+<main>
+  <!-- 0. README -->
+  <section class="panel active" id="p-readme">
+    <div class="card">
+      <h2>คู่มือการใช้งาน <span class="aun">AUN-QA v4.0 · 2569</span></h2>
+      <p class="sub">แบบฟอร์มรวบรวมข้อมูลรายวิชาเพื่อจัดทำ SAR ตามเกณฑ์ AUN-QA Version 4.0 — กรอกเป็นช่วงเวลา (ก่อนเปิดภาค / ระหว่างภาค / หลังสิ้นภาค / ทบทวนรายวิชา)</p>
+      <div class="readme-cta">
+        <button class="addrow" onclick="loadExample()">👁 โหลดตัวอย่าง (Determinative Bacteriology)</button>
+        <button class="addrow" style="background:var(--gold);color:#3a2a06" onclick="newCourse()">＋ เริ่มรายวิชาใหม่</button>
+        <button class="addrow" style="background:#5b6b7a" onclick="openLibrary()">🗂 เปิดคลังรายวิชา</button>
+      </div>
+      <div class="note-box" style="margin-top:16px"><b>ข้อควรใช้:</b> เลือกใช้เกณฑ์ <b>F &lt; 50</b> หรือ <b>F &lt; 40</b> ตามเกณฑ์ตัดเกรดของรายวิชา (ที่มุมขวาบน) — ไม่จำเป็นต้องกรอกทั้งสองชุด</div>
+    </div>
+
+    <div class="card">
+      <h2>ลำดับการกรอกข้อมูล</h2>
+      <ol class="flow">
+        <li><b>Presemester &amp; สัดส่วนคะแนน</b> — กรอกก่อนเปิดภาค (ข้อมูลพื้นฐาน, PLO/CLO, Bloom, แผนการสอน/ประเมิน, เกณฑ์เกรด)</li>
+        <li><b>กิจกรรม/หลักฐาน</b> — บันทึกระหว่างภาค</li>
+        <li><b>ประเมินผล &amp; PostSemester</b> — กรอกหลังสิ้นภาค (คะแนนรายบุคคล, ผลบรรลุ CLO/PLO, Gap, แนวทางปรับปรุง)</li>
+        <li><b>สรุปเป็นหลักฐาน SAR</b> — ดาวน์โหลด Excel เก็บไว้เป็นหลักฐานตาม AUN ที่ระบุ</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>แท็บในระบบ (เทียบกับ Sheet เดิม)</h2>
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr><th>แท็บ</th><th>ใช้เมื่อใด</th><th>สาระสำคัญ</th><th>AUN ที่ตอบ</th></tr></thead>
+          <tbody>
+            <tr><td><b>Presemester</b></td><td>ก่อนเปิดภาค</td><td>ข้อมูลพื้นฐาน, PLO/CLO, Bloom, แผนการสอน, วิธีประเมิน, Rubrics</td><td>1.1–1.3, 2.1–2.2, 2.4, 3.1–3.3, 4.1, 4.4–4.5</td></tr>
+            <tr><td><b>สัดส่วน/เกรด</b></td><td>ก่อนเปิดภาค</td><td>สัดส่วนคะแนน (อัตโนมัติ) + เกณฑ์การให้เกรด</td><td>4.1–4.5; สนับสนุน 1.5</td></tr>
+            <tr><td><b>ประเมินผล</b> (F&lt;50/F&lt;40)</td><td>หลังสิ้นภาค</td><td>คะแนนรายบุคคลตาม CLO และเกรด</td><td>1.5, 4.5, 8.1, 8.4</td></tr>
+            <tr><td><b>PostSemester</b> (F&lt;50/F&lt;40)</td><td>หลังสิ้นภาค</td><td>กิจกรรมการเรียนรู้, ผลบรรลุ CLO/PLO, Gap, แนวทางปรับปรุง</td><td>1.5, 2.4, 2.7, 3.2–3.6, 4.5–4.7, 8.4</td></tr>
+            <tr><td><b>ตั้งค่า</b></td><td>ตลอดปี</td><td>รายการ PLO / เกณฑ์บรรลุ (DropdownList)</td><td>สนับสนุนความสม่ำเสมอของข้อมูล</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>แนวทางจำแนกกิจกรรม/หัวข้อ (สำหรับ PostSemester)</h2>
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr><th>หัวข้อ</th><th>ความหมายโดยย่อ</th></tr></thead>
+          <tbody>
+            <tr><td><b>Active Learning</b></td><td>นิสิตลงมือปฏิบัติ คิดวิเคราะห์ ประยุกต์ใช้ความรู้ แก้ปัญหา สร้างข้อสรุป หรือสะท้อนการเรียนรู้</td></tr>
+            <tr><td><b>Life-long Learning</b></td><td>ส่งเสริมให้นิสิตค้นคว้า ประเมินความน่าเชื่อถือของข้อมูล และเรียนรู้ด้วยตนเองอย่างต่อเนื่อง</td></tr>
+            <tr><td><b>Innovation/Entrepreneurship</b></td><td>นิสิตสร้างแนวคิด วิธีการ ชิ้นงาน หรือแนวทางแก้ปัญหาใหม่ รวมถึงพิจารณาคุณค่า ผู้ใช้ ต้นทุน (ใช้เฉพาะรายวิชาที่บริบทเหมาะสม)</td></tr>
+            <tr><td><b>Test Blueprint</b></td><td>ผังข้อสอบที่เชื่อมโยงข้อสอบแต่ละข้อกับ CLO และระดับ Bloom เพื่อยืนยันว่าการวัดผลครอบคลุมและสอดคล้องกับสัดส่วนคะแนน</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>ระดับความรับผิดชอบของรายวิชาต่อ PLO (Cur. Map: I–R–P–M)</h2>
+      <p class="sub">ใช้เลือกในคอลัมน์ Cur.Map ของตาราง CLO — บอกว่ารายวิชารับผิดชอบพัฒนา PLO นั้นในระดับใด</p>
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr><th>ระดับ</th><th>ความหมาย</th><th>สิ่งที่ควรปรากฏใน CLO</th></tr></thead>
+          <tbody>
+            <tr><td><b>I — Introduce</b></td><td>เริ่มแนะนำ/วางพื้นฐานของ PLO ให้นิสิตรู้จักแนวคิด ทักษะ หรือวิธีปฏิบัติขั้นต้น</td><td>อธิบาย ระบุ ปฏิบัติตามขั้นตอนพื้นฐาน หรือใช้ความรู้เบื้องต้น</td></tr>
+            <tr><td><b>R — Reinforce</b></td><td>ทบทวนและเสริมความรู้/ทักษะเดิม เพิ่มความซับซ้อนหรือฝึกใช้ในบริบทใหม่</td><td>ประยุกต์ใช้ เปรียบเทียบ วิเคราะห์ขั้นต้น หรือฝึกปฏิบัติซ้ำอย่างมีเหตุผล</td></tr>
+            <tr><td><b>P — Proficient</b></td><td>ปฏิบัติ/แสดงสมรรถนะตาม PLO ได้อย่างมีประสิทธิภาพและค่อนข้างเป็นอิสระ</td><td>วิเคราะห์ ประยุกต์ ตัดสินใจ ออกแบบ แก้ปัญหาในสถานการณ์ใกล้เคียงงานจริง</td></tr>
+            <tr><td><b>M — Mastery</b></td><td>แสดงสมรรถนะขั้นสูง บูรณาการความรู้และทักษะหลายด้านเพื่อแก้ปัญหาซับซ้อน</td><td>บูรณาการ วิเคราะห์เชิงลึก ประเมินทางเลือก สร้างแนวทางแก้ปัญหา</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 1. PRESEMESTER -->
+  <section class="panel" id="p-pre">
+    <div class="card">
+      <h2>ข้อมูลพื้นฐานรายวิชา <span class="aun">AUN 1.1–1.3 · 2.1</span></h2>
+      <p class="sub">กรอกก่อนเปิดภาคเรียน · ช่องสีเทาคือช่องที่อาจารย์กรอก/เลือกเอง</p>
+      <div class="legend">
+        <span><i class="swatch fill"></i> ช่องกรอก/เลือกเอง</span>
+        <span><i class="swatch calc"></i> ดึง/คำนวณอัตโนมัติ</span>
+      </div>
+      <div class="grid g4">
+        <div class="field"><label>ภาคการศึกษา</label><select id="m_term"></select></div>
+        <div class="field"><label>ปีการศึกษา</label><select id="m_year"></select></div>
+        <div class="field"><label>รหัสวิชา</label><input id="m_code" placeholder="เช่น 30412164"></div>
+        <div class="field"><label>หน่วยกิต</label><input id="m_credits" placeholder="เช่น 3(2-3-4)"></div>
+      </div>
+      <div class="field" style="margin-top:14px"><label>ชื่อวิชา</label><input id="m_name" placeholder="ชื่อรายวิชา (ไทย/อังกฤษ)"></div>
+      <div class="field" style="margin-top:14px"><label>คำอธิบายรายวิชา</label><textarea id="m_desc" rows="4"></textarea></div>
+    </div>
+
+    <div class="card">
+      <h2>วัตถุประสงค์ของรายวิชา</h2>
+      <p class="sub">กรอกได้สูงสุด 9 ข้อ</p>
+      <div class="objgrid" id="objgrid"></div>
+      <div class="grid g2" style="margin-top:18px">
+        <div class="field"><label>(ทบทวน) วัตถุประสงค์ครอบคลุมคำอธิบายรายวิชา</label>
+          <select id="m_objcover"></select></div>
+        <div class="field"><label>(ทบทวน) CLOs สอดคล้องกับวัตถุประสงค์รายวิชา</label>
+          <select id="m_cloalign"></select></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>ตาราง CLO – การออกแบบการเรียนรู้และการประเมิน <span class="aun">AUN 1.2 · 2.2 · 3.x · 4.x</span></h2>
+      <p class="sub">เลือก PLO No. แล้ว “ด้าน TQF” และ “คำอธิบาย PLO” จะถูกดึงให้อัตโนมัติ · เลือก Bloom's Taxonomy แล้วระดับ (Level) จะปรับตามกลุ่มที่เลือก</p>
+      <div class="tbl-scroll">
+        <table id="clotable">
+          <thead><tr>
+            <th>#</th><th style="min-width:150px">PLO No.</th><th style="min-width:160px">ด้าน TQF (อัตโนมัติ)</th>
+            <th style="min-width:230px">คำอธิบาย PLO (อัตโนมัติ)</th><th title="Introduce / Reinforce / Proficient / Mastery">Cur.Map<br>(I/R/P/M)</th><th>CLO No.</th>
+            <th style="min-width:200px">รายละเอียด CLO</th><th style="min-width:140px">CLO/PLO สอดคล้องกับ Curriculum Mapping</th>
+            <th style="min-width:180px">Bloom's Taxonomy</th><th style="min-width:150px">Level of Bloom</th>
+            <th style="min-width:160px">กลยุทธ์การสอน</th><th style="min-width:160px">วิธีการประเมิน</th>
+            <th style="min-width:150px">เครื่องมือประเมิน</th><th style="min-width:90px">สัดส่วน (%)</th>
+            <th style="min-width:140px">หมายเหตุ</th><th></th>
+          </tr></thead>
+          <tbody id="clobody"></tbody>
+        </table>
+      </div>
+      <button class="addrow" onclick="addCLO()">+ เพิ่ม CLO</button>
+      <div class="sumbar" id="closum"></div>
+    </div>
+  </section>
+
+  <!-- 2. SCORE PROPORTION + GRADE -->
+  <section class="panel" id="p-score">
+    <div class="card">
+      <h2>สัดส่วนของคะแนน (อัตโนมัติ) <span class="aun">AUN 4.1–4.5</span></h2>
+      <p class="sub">ทุกคอลัมน์ดึงมาจาก Presemester · อาจารย์กรอกเฉพาะ “เกณฑ์การให้เกรด” ด้านล่าง</p>
+      <div class="tbl-scroll">
+        <table id="scoretable">
+          <thead><tr><th>PLOs No.</th><th>CLO No.</th><th style="min-width:220px">เครื่องมือประเมิน</th><th>สัดส่วนการประเมิน (%)</th></tr></thead>
+          <tbody id="scorebody"></tbody>
+        </table>
+      </div>
+      <div class="sumbar" id="scoresum"></div>
+    </div>
+    <div class="card" style="max-width:460px">
+      <h2>เกณฑ์การให้เกรด (อิงเกณฑ์)</h2>
+      <p class="sub">กรอกช่วงคะแนนของแต่ละเกรด เช่น 80–100</p>
+      <div id="gradecrit"></div>
+    </div>
+  </section>
+
+  <!-- 3. EVALUATE -->
+  <section class="panel" id="p-eval">
+    <div class="card">
+      <h2>ประเมินผล <span id="eval-scheme" class="aun">F &lt; 50</span> <span class="aun">AUN 1.5 · 4.5 · 8.x</span></h2>
+      <p class="sub">กรอกรหัสนิสิตและคะแนนของแต่ละ CLO · คอลัมน์ CLO/คะแนนเต็มถูกดึงจาก Presemester · รวม/เกรด/Mean/Min/Max คำนวณอัตโนมัติ</p>
+      <div id="eval-head" style="font-size:13px;color:var(--ink-soft);margin-bottom:12px"></div>
+      <div id="eval-warn"></div>
+
+      <details class="bulk" id="bulkpanel">
+        <summary>📋 วางข้อมูลจำนวนมาก — คัดลอกจาก Excel / Google Sheets แล้ววางทีเดียว</summary>
+        <div class="bulk-body">
+          <p class="bulk-hint">วางได้หลายแถวพร้อมกัน · ลำดับคอลัมน์ที่ระบบจะอ่าน:<br>
+            <b>รหัสนิสิต · ชื่อ-นามสกุล<span id="bulkcols"></span></b></p>
+          <p class="bulk-hint" style="color:#8a97a4">คัดลอกจากตาราง (Excel/Sheets) คอลัมน์จะคั่นด้วย Tab อัตโนมัติ · รองรับคั่นด้วยจุลภาค (,) ด้วย · หากมีแถวหัวตาราง ระบบจะข้ามให้</p>
+          <textarea id="bulkbox" rows="6" placeholder="6312345&#9;สมชาย ใจดี&#9;8&#9;15&#9;...&#10;6312346&#9;สมหญิง รักเรียน&#9;7&#9;14&#9;..."></textarea>
+          <div class="bulk-actions">
+            <label><input type="radio" name="bulkmode" value="append" checked> เพิ่ม/เติมข้อมูล (ถ้ารหัสหรือชื่อซ้ำ จะเติมเข้าคนเดิม)</label>
+            <label><input type="radio" name="bulkmode" value="replace"> แทนที่รายชื่อทั้งหมด</label>
+            <button class="addrow" style="margin:0" onclick="applyBulk()">วางข้อมูลลงตาราง</button>
+          </div>
+        </div>
+      </details>
+
+      <div class="tbl-scroll" id="evalwrap">
+        <table id="evaltable"><thead id="evalhead"></thead><tbody id="evalbody"></tbody><tfoot id="evalfoot"></tfoot></table>
+      </div>
+      <button class="addrow" onclick="addStudent()">+ เพิ่มนิสิต</button>
+      <span style="margin-left:10px;font-size:12.5px;color:var(--ink-soft)">จำนวนนิสิต: <b id="stcount">0</b></span>
+    </div>
+  </section>
+
+  <!-- 4. POSTSEMESTER -->
+  <section class="panel" id="p-post">
+    <div class="card">
+      <h2>PostSemester <span id="post-scheme" class="aun">F &lt; 50</span> <span class="aun">AUN 3.x · 4.6–4.7 · 8.4</span></h2>
+      <p class="sub">ผลบรรลุ CLO/PLO ดึงและประมวลผลอัตโนมัติ · ช่องสีเทาให้กรอกเอง (กิจกรรม / Gap / แนวทางปรับปรุง)</p>
+      <div class="sec-eyebrow">กิจกรรมการเรียนรู้และการปรับปรุง</div>
+      <div style="border:1px solid var(--line);border-radius:7px;padding:6px 14px;margin-bottom:18px" id="postacts"></div>
+      <div class="field" style="margin-bottom:18px"><label>หมายเหตุ</label><textarea id="post_note" rows="2" oninput="state.post.note=this.value"></textarea></div>
+
+      <div class="sec-eyebrow">ผลการบรรลุรายCLO (อัตโนมัติ) + การวิเคราะห์</div>
+      <div class="tbl-scroll">
+        <table id="posttable">
+          <thead><tr>
+            <th>CLO No.</th><th style="min-width:200px">รายละเอียด CLO</th><th>PLO</th>
+            <th>สัดส่วน(%)</th><th>Min</th><th>Max</th><th>Mean</th><th>%ที่ได้รับ</th>
+            <th>เกณฑ์บรรลุ(%)</th><th>ผลเปรียบเทียบ</th>
+            <th style="min-width:170px">Gap/การตีความ</th><th style="min-width:170px">ข้อปรับปรุงจากปีก่อน</th><th style="min-width:170px">แนวทางครั้งต่อไป</th>
+          </tr></thead>
+          <tbody id="postbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. SETTINGS -->
+  <section class="panel" id="p-set">
+    <div class="card">
+      <h2>ตั้งค่า DropdownList</h2>
+      <p class="sub">รายการ PLO / เกณฑ์บรรลุ ใช้กับทุกชีต · แก้ได้หากนำไปใช้กับหลักสูตรอื่น</p>
+      <div class="tbl-scroll">
+        <table id="plotable">
+          <thead><tr><th>PLO No.</th><th style="min-width:220px">ด้าน TQF (2558)</th><th style="min-width:340px">คำอธิบาย PLO</th><th style="min-width:120px">เกณฑ์บรรลุ (%)</th><th></th></tr></thead>
+          <tbody id="plobody"></tbody>
+        </table>
+      </div>
+      <button class="addrow" onclick="addPLO()">+ เพิ่ม PLO</button>
+      <div class="note-box" style="margin-top:18px">
+        <b>เกณฑ์ตัดเกรด</b> — F&lt;50: A≥79.5, B+≥74.5, B≥69.5, C+≥64.5, C≥59.5, D+≥54.5, D≥49.5, F&lt;49.5 ·
+        F&lt;40: A≥79.5, B+≥74.5, B≥69.5, C+≥59.5, C≥49.5, D+≥44.5, D≥39.5, F&lt;39.5
+      </div>
+    </div>
+  </section>
+</main>
+
+<div class="modal-overlay" id="libmodal" onclick="if(event.target===this)closeLibrary()">
+  <div class="modal">
+    <div class="modal-head">
+      <h2>🗂 คลังรายวิชา</h2>
+      <button class="modal-x" onclick="closeLibrary()">×</button>
+    </div>
+    <p class="sub" style="margin:0 0 14px">บันทึกแต่ละรายวิชาแยกกัน เรียกกลับมาแก้ต่อได้ · ข้อมูลเก็บในเบราว์เซอร์ของเครื่องนี้ (แนะนำให้กด “บันทึกไฟล์” สำรองไว้ด้วย)</p>
+    <div class="lib-actions">
+      <button class="addrow" onclick="saveToLibrary()">💾 บันทึกรายวิชาที่กำลังกรอกลงคลัง</button>
+      <button class="addrow" style="background:var(--gold);color:#3a2a06" onclick="newCourse(true)">＋ เริ่มรายวิชาใหม่</button>
+    </div>
+    <div id="libwarn"></div>
+    <div id="liblist" class="lib-list"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="inboxmodal" onclick="if(event.target===this)closeInbox()">
+  <div class="modal" style="max-width:860px">
+    <div class="modal-head">
+      <h2>📥 รายการที่ส่งเข้าระบบกลาง</h2>
+      <button class="modal-x" onclick="closeInbox()">×</button>
+    </div>
+    <p class="sub" id="inboxsub" style="margin:0 0 12px">กำลังเชื่อมต่อระบบกลาง…</p>
+    <div class="lib-actions" style="margin-bottom:10px">
+      <button class="lib-btn" onclick="renderInbox()">🔄 รีเฟรช</button>
+      <button class="lib-btn" onclick="openInboxTab()">↗ เปิดรายการในแท็บใหม่</button>
+    </div>
+    <div id="inboxwrap"><div class="lib-empty">กำลังโหลด…</div></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<footer>ระบบกรอกรายละเอียดรายวิชาเพื่อจัดทำ SAR (AUN-QA v4.0) · ข้อมูลทั้งหมดอยู่ในเครื่องของคุณ บันทึกเป็นไฟล์ .json เพื่อทำงานต่อ</footer>
+
+<script>
+/* =========================================================
+   ระบบกลาง (Google Apps Script Web App)
+   แอดมิน: วาง URL ที่ได้จากการ Deploy (ลงท้ายด้วย /exec) ในเครื่องหมายคำพูดด้านล่าง
+   ตัวอย่าง: const CENTRAL_URL = 'https://script.google.com/macros/s/AKfy....../exec';
+   ถ้าเว้นว่างไว้ ปุ่ม "ส่งเข้าระบบกลาง" จะถาม URL ครั้งแรกแล้วจำไว้ในเครื่อง
+   ========================================================= */
+let CENTRAL_URL = 'https://script.google.com/a/macros/go.buu.ac.th/s/AKfycbx2QypOUqQUadvSUqwl589h5UCZibuN8z-_hhRNEWu-NAGaJUHxNgAUl5DKMYNlD1p-uA/exec';
+
+/* =========================================================
+   CONFIG (DropdownList equivalents) — editable in Settings
+   ========================================================= */
+const CFG = {
+  terms:['ภาคต้น','ภาคปลาย','ฤดูร้อน'],
+  years:Array.from({length:20},(_,i)=>2569+i),
+  curmap:['I','R','P','M'],
+  alignCLO:['สอดคล้อง','ไม่สอดคล้อง'],
+  objCover:['ครอบคลุม','ไม่ครอบคลุม'],
+  hasOpt:['มี','ไม่มี'],
+  bloom:{
+    'พุทธพิสัย (Cognitive domain)':['Remember','Understand','Apply','Analyze','Evaluate','Create'],
+    'จิตพิสัย (Affective domain)':['Receiving','Responding','Valuing','Organization','Characterization'],
+    'ทักษะพิสัย (Psychomotor domain)':['Reflex','Basic fundamental movements','Perceptual abilities','Physical abilities','Skilled movements','Non-discursive communication']
+  },
+  plos:[
+    {no:'PLO 1',tqf:'ด้านจริยธรรม',desc:'PLO 1 ยึดหลักจริยธรรมของนักวิทยาศาสตร์ และจรรยาบรรณแห่งวิชาชีพ โดยไม่คัดลอกผลงานทางวิชาการและรายงานผลการปฏิบัติงานด้านวิชาชีพตามความเป็นจริง',th:70},
+    {no:'PLO 2',tqf:'ด้านความรู้',desc:'PLO 2 ประยุกต์ความรู้ทางจุลชีววิทยาในระบบการผลิตของอุตสาหกรรมอาหาร หรืออุตสาหกรรมที่เกี่ยวข้องและสนับสนุนกับอุตสาหกรรมอาหาร เพื่อการผลิตและพัฒนาผลิตภัณฑ์ โดยยึดหลักความปลอดภัยทางชีวภาพและจุลชีววิทยา',th:50},
+    {no:'PLO 3',tqf:'ด้านทักษะ',desc:'PLO 3 ค้นคว้าองค์ความรู้หรือนวัตกรรมจากแหล่งข้อมูลที่เชื่อถือได้ทุกครั้งเมื่อมีการวิเคราะห์จุลินทรีย์และพัฒนาผลิตภัณฑ์ในอุตสาหกรรมอาหาร',th:70},
+    {no:'PLO 4',tqf:'ด้านคุณลักษณะ',desc:'PLO 4 ใช้กระบวนการคิดอย่างเป็นระบบในการตัดสินใจและแก้ไขปัญหาในการปฏิบัติงานทางด้านจุลชีววิทยา',th:70},
+    {no:'PLO 5',tqf:'ด้านคุณลักษณะ',desc:'PLO 5 แสดงบุคลิกภาพของการมีทัศนคติและแนวคิดแบบยืดหยุ่น เป็นผู้นำและผู้ตามที่ดีในสถานการณ์ที่ต้องปฏิบัติงานร่วมกับผู้อื่น',th:70},
+    {no:'PLO 6',tqf:'ด้านจริยธรรม',desc:'PLO 6 วิเคราะห์ข้อมูลหรือชุดข้อมูลได้ด้วยการใช้ทักษะดิจิทัลและโปรแกรมวิเคราะห์ทางด้านชีวสารสนเทศ',th:70},
+    {no:'PLO 7',tqf:'ด้านทักษะ',desc:'PLO 7 วิเคราะห์จุลินทรีย์ในห่วงโซ่คุณค่าของอุตสาหกรรมอาหารได้ด้วยวิธีมาตรฐานสากล',th:70}
+  ]
+};
+const GRADE = {
+  F50:[[79.5,'A'],[74.5,'B+'],[69.5,'B'],[64.5,'C+'],[59.5,'C'],[54.5,'D+'],[49.5,'D'],[-Infinity,'F']],
+  F40:[[79.5,'A'],[74.5,'B+'],[69.5,'B'],[59.5,'C+'],[49.5,'C'],[44.5,'D+'],[39.5,'D'],[-Infinity,'F']]
+};
+const GRADE_ORDER=['A','B+','B','C+','C','D+','D','F'];
+
+/* =========================================================
+   STATE
+   ========================================================= */
+function blankCLO(){return{plo:'',curmap:'',cloNo:'',detail:'',align:'',bloomDomain:'',bloomLevel:'',strategy:'',method:'',tool:'',weight:'',note:''}}
+function blankStudent(){return{id:'',name:'',scores:{}}}   // scores keyed by clo row id
+function blankPostRow(){return{gap:'',prev:'',next:''}}
+let state = {
+  scheme:'F50',
+  meta:{term:'ภาคต้น',year:2569,code:'',name:'',credits:''},
+  desc:'',
+  objectives:Array(9).fill(''),
+  objCover:'', cloAlign:'',
+  clos:[blankCLO(),blankCLO(),blankCLO()],
+  gradeCrit:{'A':'','B+':'','B':'','C+':'','C':'','D+':'','D':'','F':''},
+  students:[blankStudent(),blankStudent()],
+  post:{note:'', acts:{
+    'Active Learning':{has:'',detail:'',method:'',problem:'',improve:''},
+    'LifeLong Learning':{has:'',detail:'',method:'',problem:'',improve:''},
+    'Innovation/Entrepreneurship':{has:'',detail:'',method:'',problem:'',improve:''},
+    'Test Blueprint':{has:'',detail:'',method:'',problem:'',improve:''}
+  }, rows:{}}
+};
+let cloSeq=0; state.clos.forEach(c=>c._id=cloSeq++);
+
+/* =========================================================
+   HELPERS
+   ========================================================= */
+const $=id=>document.getElementById(id);
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200)}
+function opt(arr,sel){return ['<option value=""></option>'].concat(arr.map(v=>`<option ${String(v)===String(sel)?'selected':''}>${v}</option>`)).join('')}
+function ploByNo(no){return CFG.plos.find(p=>p.no===no)}
+function activeCLOs(){ // CLOs that have any meaningful content -> become evaluation columns
+  return state.clos.filter(c=>(c.cloNo&&c.cloNo.trim())||(c.detail&&c.detail.trim())||(c.weight!==''&&c.weight!=null));
+}
+function num(v){const n=parseFloat(v);return isNaN(n)?null:n}
+function fmt(n,d=2){return n==null?'–':(Math.round(n*Math.pow(10,d))/Math.pow(10,d)).toString()}
+
+/* =========================================================
+   TABS
+   ========================================================= */
+const TABS=[['p-readme','คู่มือ'],['p-pre','Presemester'],['p-score','สัดส่วน/เกรด'],['p-eval','ประเมินผล'],['p-post','PostSemester'],['p-set','ตั้งค่า']];
+function buildTabs(){
+  $('tabbar').innerHTML=TABS.map((t,i)=>`<button data-t="${t[0]}" onclick="go('${t[0]}')"><span class="num">${i+1}</span>${t[1]}</button>`).join('');
+  go('p-readme');
+}
+function go(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.toggle('active',p.id===id));
+  document.querySelectorAll('nav.tabs button').forEach(b=>b.classList.toggle('active',b.dataset.t===id));
+  if(id==='p-score'){renderScore();renderGradeCrit();}
+  if(id==='p-eval')renderEval();
+  if(id==='p-post')renderPost();
+  if(id==='p-set')renderPLO();
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+/* =========================================================
+   SCHEME
+   ========================================================= */
+function setScheme(s){state.scheme=s;
+  $('eval-scheme').textContent='F < '+(s==='F50'?'50':'40');
+  $('post-scheme').textContent='F < '+(s==='F50'?'50':'40');
+  if($('p-eval').classList.contains('active'))renderEval();
+}
+function gradeOf(total){
+  if(total==null) return '–';
+  for(const [cut,g] of GRADE[state.scheme]) if(total>=cut) return g;
+  return 'F';
+}
+
+/* =========================================================
+   PRESEMESTER — header & objectives
+   ========================================================= */
+function buildHeaderFields(){
+  $('m_term').innerHTML=opt(CFG.terms,state.meta.term);
+  $('m_year').innerHTML=opt(CFG.years,state.meta.year);
+  $('m_objcover').innerHTML=opt(CFG.objCover,state.objCover);
+  $('m_cloalign').innerHTML=opt(CFG.alignCLO,state.cloAlign);
+  $('m_term').onchange=e=>{state.meta.term=e.target.value;updateCourseTag();};
+  $('m_year').onchange=e=>{state.meta.year=e.target.value;updateCourseTag();};
+  $('m_code').oninput=e=>{state.meta.code=e.target.value;updateCourseTag();};
+  $('m_name').oninput=e=>{state.meta.name=e.target.value;updateCourseTag();};
+  $('m_credits').oninput=e=>state.meta.credits=e.target.value;
+  $('m_desc').oninput=e=>state.desc=e.target.value;
+  $('m_objcover').onchange=e=>state.objCover=e.target.value;
+  $('m_cloalign').onchange=e=>state.cloAlign=e.target.value;
+  $('m_code').value=state.meta.code;$('m_name').value=state.meta.name;
+  $('m_credits').value=state.meta.credits;$('m_desc').value=state.desc;
+  // objectives
+  $('objgrid').innerHTML=state.objectives.map((v,i)=>
+    `<span class="ono">${i+1})</span><input value="${esc(v)}" oninput="state.objectives[${i}]=this.value">`).join('');
+}
+function esc(s){return (s==null?'':String(s)).replace(/"/g,'&quot;').replace(/</g,'&lt;')}
+
+/* =========================================================
+   CLO TABLE
+   ========================================================= */
+function renderCLO(){
+  const tb=$('clobody');
+  tb.innerHTML=state.clos.map((c,i)=>{
+    const p=ploByNo(c.plo);
+    const tqf=p?p.tqf:'';const desc=p?p.desc:'';
+    const levels=CFG.bloom[c.bloomDomain]||[];
+    return `<tr data-i="${i}">
+      <td class="idx">${i+1}</td>
+      <td><select onchange="setCLO(${i},'plo',this.value)">${opt(CFG.plos.map(p=>p.no),c.plo)}</select></td>
+      <td class="calc">${esc(tqf)||'<span style="color:#aab">–</span>'}</td>
+      <td class="calc">${esc(desc)||'<span style="color:#aab">–</span>'}</td>
+      <td><select onchange="setCLO(${i},'curmap',this.value)">${opt(CFG.curmap,c.curmap)}</select></td>
+      <td><input value="${esc(c.cloNo)}" oninput="setCLO(${i},'cloNo',this.value)" style="min-width:70px"></td>
+      <td><textarea oninput="setCLO(${i},'detail',this.value)">${esc(c.detail)}</textarea></td>
+      <td><select onchange="setCLO(${i},'align',this.value)">${opt(CFG.alignCLO,c.align)}</select></td>
+      <td><select onchange="setCLO(${i},'bloomDomain',this.value)">${opt(Object.keys(CFG.bloom),c.bloomDomain)}</select></td>
+      <td><select onchange="setCLO(${i},'bloomLevel',this.value)" ${levels.length?'':'disabled'}>${opt(levels,c.bloomLevel)}</select></td>
+      <td><textarea oninput="setCLO(${i},'strategy',this.value)">${esc(c.strategy)}</textarea></td>
+      <td><textarea oninput="setCLO(${i},'method',this.value)">${esc(c.method)}</textarea></td>
+      <td><textarea oninput="setCLO(${i},'tool',this.value)">${esc(c.tool)}</textarea></td>
+      <td class="num-cell"><input type="number" value="${esc(c.weight)}" oninput="setCLO(${i},'weight',this.value)" style="width:75px"></td>
+      <td><textarea oninput="setCLO(${i},'note',this.value)">${esc(c.note)}</textarea></td>
+      <td><button class="row-del" onclick="delCLO(${i})">×</button></td>
+    </tr>`;
+  }).join('');
+  cloSum();
+}
+function setCLO(i,k,v){
+  const c=state.clos[i];c[k]=v;
+  if(k==='plo'){renderCLO();}            // refresh auto cols
+  else if(k==='bloomDomain'){c.bloomLevel='';renderCLO();}
+  else if(k==='weight'){cloSum();}
+}
+function cloSum(){
+  const sum=state.clos.reduce((s,c)=>s+(num(c.weight)||0),0);
+  const bar=$('closum');
+  if(sum===0){bar.className='sumbar';bar.innerHTML='ผลรวมสัดส่วนการประเมิน: <b>–</b>';}
+  else if(Math.abs(sum-100)<.001){bar.className='sumbar good';bar.innerHTML='✓ ผลรวมสัดส่วนการประเมิน: <b>'+fmt(sum)+'%</b> (ครบ 100%)';}
+  else{bar.className='sumbar warn';bar.innerHTML='⚠ ผลรวมสัดส่วนการประเมิน: <b>'+fmt(sum)+'%</b> — ควรเท่ากับ 100%';}
+}
+function addCLO(){const c=blankCLO();c._id=cloSeq++;state.clos.push(c);renderCLO();}
+function delCLO(i){state.clos.splice(i,1);if(!state.clos.length){const c=blankCLO();c._id=cloSeq++;state.clos.push(c);}renderCLO();}
+
+/* =========================================================
+   SCORE PROPORTION + GRADE CRITERIA
+   ========================================================= */
+function renderScore(){
+  const rows=state.clos;
+  $('scorebody').innerHTML=rows.map(c=>{
+    return `<tr><td>${esc(c.plo)||'–'}</td><td>${esc(c.cloNo)||'–'}</td><td>${esc(c.tool)||'–'}</td>
+      <td class="num-cell calc">${c.weight!==''&&c.weight!=null?esc(c.weight):'–'}</td></tr>`;
+  }).join('') || '<tr><td colspan="4" class="empty-hint">ยังไม่มี CLO — กรอกในหน้า Presemester</td></tr>';
+  const sum=rows.reduce((s,c)=>s+(num(c.weight)||0),0);
+  const bar=$('scoresum');
+  bar.className='sumbar'+(sum?(Math.abs(sum-100)<.001?' good':' warn'):'');
+  bar.innerHTML='ผลรวมสัดส่วน: <b>'+(sum?fmt(sum)+'%':'–')+'</b>'+(sum&&Math.abs(sum-100)>=.001?' (ควรเท่ากับ 100%)':'');
+}
+function renderGradeCrit(){
+  $('gradecrit').innerHTML=GRADE_ORDER.map(g=>
+    `<div class="field" style="flex-direction:row;align-items:center;gap:12px;margin-bottom:8px">
+      <label style="width:34px;font-size:15px;font-weight:700;color:var(--teal)">${g}</label>
+      <input value="${esc(state.gradeCrit[g])}" placeholder="ช่วงคะแนน เช่น 80–100" oninput="state.gradeCrit['${g}']=this.value">
+    </div>`).join('');
+}
+
+/* =========================================================
+   EVALUATE (student scoring grid)
+   ========================================================= */
+const MAX_STUDENTS=300;
+function evalCols(){return activeCLOs();}
+function rowTotal(st,cols){let t=0,any=false;cols.forEach(c=>{const v=num(st.scores[c._id]);if(v!=null){t+=v;any=true;}});return any?t:null;}
+function evalStats(cols){
+  return cols.map(c=>{
+    const vals=state.students.map(st=>num(st.scores[c._id])).filter(v=>v!=null);
+    const full=num(c.weight);
+    const mean=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
+    const mn=vals.length?Math.min(...vals):null, mx=vals.length?Math.max(...vals):null;
+    const pct=(mean!=null&&full)?mean/full*100:null;   // corrected: Mean/Full*100
+    return {mean,mn,mx,pct,full};
+  });
+}
+function evalHeadHTML(cols){
+  if(!cols.length)
+    return `<tr><th class="c0">ลำดับ</th><th class="c1">รหัสนิสิต</th><th class="c2">ชื่อ-นามสกุล</th><th>รวม</th><th>เกรด</th></tr>`;
+  return `<tr><th class="c0" rowspan="4">ลำดับ</th><th class="c1" rowspan="4">รหัสนิสิต</th><th class="c2" rowspan="4">ชื่อ-นามสกุล</th>
+       ${cols.map(c=>`<th>PLO ${esc(c.plo).replace('PLO','').trim()}</th>`).join('')}
+       <th rowspan="4">รวม</th><th rowspan="4">เกรด</th></tr>
+     <tr>${cols.map(c=>`<th>CLO ${esc(c.cloNo)}</th>`).join('')}</tr>
+     <tr>${cols.map(c=>`<th style="font-weight:400;max-width:120px;white-space:normal">${esc(c.tool)}</th>`).join('')}</tr>
+     <tr>${cols.map(c=>`<th>เต็ม ${c.weight!==''?esc(c.weight):'–'}</th>`).join('')}</tr>`;
+}
+function studentRowHTML(st,si,cols){
+  const tot=rowTotal(st,cols);
+  const scoreTds=cols.map(c=>
+    `<td class="num-cell"><input type="number" value="${esc(st.scores[c._id])}" oninput="onScore(${si},${c._id},this.value)" style="width:62px"></td>`).join('');
+  return `<tr id="strow-${si}"><td class="idx c0">${si+1}</td>
+      <td class="c1"><input value="${esc(st.id)}" oninput="state.students[${si}].id=this.value" placeholder="รหัส" style="min-width:100px"></td>
+      <td class="c2"><input value="${esc(st.name)}" oninput="state.students[${si}].name=this.value" placeholder="ชื่อ-นามสกุล" style="min-width:160px"></td>
+      ${scoreTds}
+      <td class="calc num-cell" id="tot-${si}"><b>${tot==null?'–':fmt(tot,2)}</b></td>
+      <td class="calc grade-badge" id="grd-${si}">${gradeOf(tot)}</td>
+      <td style="border:none;background:#fff"><button class="row-del" onclick="delStudent(${si})">×</button></td></tr>`;
+}
+function evalFootHTML(cols,stats){
+  if(!cols.length)return '';
+  const row=(label,vals)=>`<tr><td class="cf" colspan="3" style="text-align:right;font-weight:700">${label}</td>${vals.map(v=>`<td class="num-cell">${v}</td>`).join('')}<td colspan="2"></td></tr>`;
+  return row('Mean',stats.map(s=>fmt(s.mean)))+row('Min',stats.map(s=>fmt(s.mn)))+
+         row('Max',stats.map(s=>fmt(s.mx)))+row('% ที่ได้รับ',stats.map(s=>fmt(s.pct,1)));
+}
+function updateEvalFooter(cols){$('evalfoot').innerHTML=evalFootHTML(cols,evalStats(cols));}
+function renderEval(){
+  setScheme(state.scheme);
+  const cols=evalCols();
+  $('eval-head').innerHTML=`ภาค ${esc(state.meta.term)} ปี ${esc(state.meta.year)} · รหัสวิชา <b>${esc(state.meta.code)||'–'}</b> · ${esc(state.meta.name)||'–'}`;
+  $('bulkcols').innerHTML = cols.length? ' · '+cols.map(c=>'คะแนน CLO '+(esc(c.cloNo)||'?')).join(' · ') : ' (ยังไม่มี CLO ให้กรอกคะแนน)';
+  $('eval-warn').innerHTML = cols.length? '' :
+    '<div class="note-box">ยังไม่มี CLO ที่จะประเมิน — กรอกตาราง CLO ในหน้า Presemester ก่อน (ตารางนี้จะแสดงเฉพาะรหัส/ชื่อจนกว่าจะมี CLO)</div>';
+  $('evalhead').innerHTML=evalHeadHTML(cols);
+  $('evalbody').innerHTML=state.students.map((st,si)=>studentRowHTML(st,si,cols)).join('');
+  updateEvalFooter(cols);
+  $('stcount').textContent=state.students.length;
+}
+function onScore(si,cloId,v){                 // update one cell — no full re-render (keeps focus)
+  state.students[si].scores[cloId]=v;
+  const cols=evalCols();
+  const tot=rowTotal(state.students[si],cols);
+  const tEl=$('tot-'+si); if(tEl)tEl.innerHTML='<b>'+(tot==null?'–':fmt(tot,2))+'</b>';
+  const gEl=$('grd-'+si); if(gEl)gEl.textContent=gradeOf(tot);
+  updateEvalFooter(cols);
+}
+function addStudent(){
+  if(state.students.length>=MAX_STUDENTS){toast('สูงสุด '+MAX_STUDENTS+' คน');return;}
+  state.students.push(blankStudent());
+  const cols=evalCols(),si=state.students.length-1;
+  $('evalbody').insertAdjacentHTML('beforeend',studentRowHTML(state.students[si],si,cols));
+  $('stcount').textContent=state.students.length;
+  updateEvalFooter(cols);
+}
+function delStudent(si){
+  state.students.splice(si,1);
+  if(!state.students.length)state.students.push(blankStudent());
+  renderEval();                                // rebuild to re-index rows
+}
+function isEmptyStudent(st){return !(st.id&&st.id.trim())&&!(st.name&&st.name.trim())&&Object.keys(st.scores||{}).length===0;}
+function findStudentIdx(list,id,name){
+  if(id&&id.trim()){const i=list.findIndex(s=>s.id&&s.id.trim()===id.trim());if(i>=0)return i;}
+  if(name&&name.trim()){const i=list.findIndex(s=>s.name&&s.name.trim()===name.trim());if(i>=0)return i;}
+  return -1;
+}
+function mergeRow(list,id,name,scoreArr,cols){
+  let i=findStudentIdx(list,id,name);
+  if(i<0){const st=blankStudent();st.id=id;st.name=name;list.push(st);i=list.length-1;}
+  else{ if(name&&!list[i].name)list[i].name=name; if(id&&!list[i].id)list[i].id=id; }
+  cols.forEach((c,ci)=>{const v=scoreArr[ci]; if(v!==undefined&&v!=='')list[i].scores[c._id]=v;});
+  return i;
+}
+function applyBulk(){
+  const raw=$('bulkbox').value.replace(/\s+$/,'');
+  if(!raw.trim()){toast('ยังไม่มีข้อมูลให้วาง');return;}
+  const cols=evalCols();
+  const mode=document.querySelector('input[name=bulkmode]:checked').value;
+  const split=l=> l.includes('\t')?l.split('\t') : (l.includes(',')?l.split(',') : [l]);
+  let lines=raw.split(/\r?\n/).filter(l=>l.trim()!=='').map(l=>split(l).map(p=>p.trim()));
+  if(lines.length && /รหัส|ลำดับ|name|id|^no\.?$/i.test(lines[0][0]||'')) lines=lines.slice(1);
+  const parsed=lines.map(p=>({id:p[0]||'',name:p[1]||'',sc:cols.map((c,ci)=>p[2+ci])}));
+  if(!parsed.length){toast('อ่านข้อมูลไม่ได้');return;}
+  // start from existing (append) or empty (replace); always merge duplicates by รหัส/ชื่อ
+  let target = (mode==='append') ? state.students.filter(st=>!isEmptyStudent(st)) : [];
+  let added=0,merged=0;
+  parsed.forEach(p=>{
+    const before=target.length;
+    mergeRow(target,p.id,p.name,p.sc,cols);
+    if(target.length>before)added++; else merged++;
+  });
+  if(target.length>MAX_STUDENTS){toast('เกิน '+MAX_STUDENTS+' คน');return;}
+  if(!target.length)target.push(blankStudent());
+  state.students=target;
+  $('bulkbox').value='';
+  $('bulkpanel').open=false;
+  renderEval();
+  toast('วางข้อมูลแล้ว — เพิ่มใหม่ '+added+' คน'+(merged?' · เติมข้อมูลคนเดิม '+merged+' คน':''));
+}
+
+/* =========================================================
+   POSTSEMESTER
+   ========================================================= */
+function postStats(){ // recompute per active CLO
+  const cols=activeCLOs();
+  return cols.map(c=>{
+    const vals=state.students.map(st=>num(st.scores[c._id])).filter(v=>v!=null);
+    const full=num(c.weight);
+    const mean=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:null;
+    const mn=vals.length?Math.min(...vals):null, mx=vals.length?Math.max(...vals):null;
+    const pct=(mean!=null&&full)?mean/full*100:null;
+    const p=ploByNo(c.plo);const th=p?p.th:null;
+    let result='–';if(pct!=null&&th!=null)result=pct>=th?'บรรลุ':'ไม่บรรลุ';
+    return {c,mean,mn,mx,pct,full,th,result};
+  });
+}
+function renderPost(){
+  setScheme(state.scheme);
+  // activities
+  $('postacts').innerHTML=Object.keys(state.post.acts).map(k=>{
+    const a=state.post.acts[k];
+    return `<div class="post-act">
+      <div class="lbl">กิจกรรม ${k}</div>
+      <div><select onchange="state.post.acts['${k}'].has=this.value">${opt(CFG.hasOpt,a.has)}</select></div>
+      <div class="grid g2" style="gap:8px">
+        <input placeholder="กิจกรรมดังกล่าว คือ" value="${esc(a.detail)}" oninput="state.post.acts['${k}'].detail=this.value">
+        <input placeholder="วิธีการประเมิน คือ" value="${esc(a.method)}" oninput="state.post.acts['${k}'].method=this.value">
+        <input placeholder="ปัญหาที่พบ (ถ้ามี)" value="${esc(a.problem)}" oninput="state.post.acts['${k}'].problem=this.value">
+        <input placeholder="แนวทางการปรับปรุง" value="${esc(a.improve)}" oninput="state.post.acts['${k}'].improve=this.value">
+      </div></div>`;
+  }).join('');
+  $('post_note').value=state.post.note;
+  // CLO results
+  const stats=postStats();
+  $('postbody').innerHTML=stats.map(s=>{
+    const id=s.c._id; const r=state.post.rows[id]||(state.post.rows[id]=blankPostRow());
+    const rc=s.result==='บรรลุ'?'ok':(s.result==='ไม่บรรลุ'?'no':'');
+    return `<tr>
+      <td>${esc(s.c.cloNo)||'–'}</td><td>${esc(s.c.detail)||'–'}</td><td>${esc(s.c.plo)||'–'}</td>
+      <td class="calc num-cell">${s.full!=null?fmt(s.full,0):'–'}</td>
+      <td class="calc num-cell">${fmt(s.mn)}</td><td class="calc num-cell">${fmt(s.mx)}</td>
+      <td class="calc num-cell">${fmt(s.mean)}</td><td class="calc num-cell">${fmt(s.pct,1)}</td>
+      <td class="calc num-cell">${s.th!=null?s.th:'–'}</td>
+      <td class="calc grade-badge ${rc}">${s.result}</td>
+      <td><textarea oninput="setPost(${id},'gap',this.value)">${esc(r.gap)}</textarea></td>
+      <td><textarea oninput="setPost(${id},'prev',this.value)">${esc(r.prev)}</textarea></td>
+      <td><textarea oninput="setPost(${id},'next',this.value)">${esc(r.next)}</textarea></td>
+    </tr>`;
+  }).join('') || '<tr><td colspan="13" class="empty-hint">ยังไม่มี CLO</td></tr>';
+}
+function setPost(id,k,v){(state.post.rows[id]||(state.post.rows[id]=blankPostRow()))[k]=v;}
+
+/* =========================================================
+   SETTINGS (PLO list)
+   ========================================================= */
+function renderPLO(){
+  $('plobody').innerHTML=CFG.plos.map((p,i)=>
+    `<tr><td><input value="${esc(p.no)}" oninput="CFG.plos[${i}].no=this.value"></td>
+     <td><input value="${esc(p.tqf)}" oninput="CFG.plos[${i}].tqf=this.value"></td>
+     <td><textarea oninput="CFG.plos[${i}].desc=this.value">${esc(p.desc)}</textarea></td>
+     <td class="num-cell"><input type="number" value="${esc(p.th)}" oninput="CFG.plos[${i}].th=parseFloat(this.value)||0" style="width:80px"></td>
+     <td><button class="row-del" onclick="delPLO(${i})">×</button></td></tr>`).join('');
+}
+function addPLO(){CFG.plos.push({no:'PLO '+(CFG.plos.length+1),tqf:'',desc:'',th:70});renderPLO();}
+function delPLO(i){CFG.plos.splice(i,1);renderPLO();}
+
+/* =========================================================
+   SAVE / LOAD
+   ========================================================= */
+/* =========================================================
+   ส่งเข้าระบบกลาง + ดูรายการที่ส่งเข้ามา
+   ========================================================= */
+function getCentralUrl(ask){
+  let url=CENTRAL_URL;
+  if(!url){try{url=localStorage.getItem('central_url')||'';}catch(e){}}
+  if(!url&&ask){
+    url=(prompt('วาง URL ระบบกลาง (Apps Script ลงท้ายด้วย /exec) ที่แอดมินให้มา:')||'').trim();
+    if(url){try{localStorage.setItem('central_url',url);}catch(e){}}
+  }
+  return url;
+}
+function submitCentral(){
+  const url=getCentralUrl(true);
+  if(!url){toast('ยังไม่ได้ตั้งค่า URL ระบบกลาง');return;}
+  if(!/macros\/s\/.+\/exec/.test(url) && !confirm('URL อาจไม่ถูกต้อง (ปกติลงท้ายด้วย /exec) ต้องการส่งต่อไปหรือไม่?'))return;
+  if(!confirm('ส่งสำเนาข้อมูลรายวิชา “'+(state.meta.code||'-')+' '+(state.meta.name||'')+'” เข้าระบบกลาง?\n(ระบบจะบันทึกพร้อมอีเมลผู้ส่งของคุณ)'))return;
+  const payload=JSON.stringify({_app:'course-detail-aunqa',_v:2,submittedAt:new Date().toISOString(),state,plos:CFG.plos});
+  const f=document.createElement('form');
+  f.method='POST';f.action=url;f.target='_blank';
+  const i=document.createElement('input');i.type='hidden';i.name='payload';i.value=payload;f.appendChild(i);
+  document.body.appendChild(f);f.submit();setTimeout(()=>{try{document.body.removeChild(f);}catch(e){}},1500);
+  toast('กำลังส่งเข้าระบบกลาง… ดูผลในแท็บใหม่');
+}
+function resetCentralUrl(){try{localStorage.removeItem('central_url');}catch(e){}toast('ล้าง URL ระบบกลางแล้ว');}
+
+// อ่านข้อมูลข้ามโดเมนแบบ JSONP (ไม่ติด CORS)
+function jsonp(url,params){
+  return new Promise((resolve,reject)=>{
+    const cb='__cb'+Date.now()+Math.floor(Math.random()*1e4);
+    const q=Object.keys(params).map(k=>encodeURIComponent(k)+'='+encodeURIComponent(params[k])).join('&');
+    const sep=url.indexOf('?')>=0?'&':'?';
+    const s=document.createElement('script');
+    const timer=setTimeout(()=>{cleanup();reject(new Error('timeout'));},20000);
+    function cleanup(){clearTimeout(timer);try{delete window[cb];}catch(e){window[cb]=undefined;}if(s.parentNode)s.parentNode.removeChild(s);}
+    window[cb]=d=>{cleanup();resolve(d);};
+    s.onerror=()=>{cleanup();reject(new Error('network'));};
+    s.src=url+sep+q+'&callback='+cb;
+    document.body.appendChild(s);
+  });
+}
+let INBOX_CACHE=[];
+function openInbox(){
+  const url=getCentralUrl(true);
+  if(!url){toast('ยังไม่ได้ตั้งค่า URL ระบบกลาง');return;}
+  $('inboxmodal').classList.add('show');
+  renderInbox();
+}
+function closeInbox(){$('inboxmodal').classList.remove('show');}
+function openInboxTab(){
+  const url=getCentralUrl(false);if(!url)return;
+  window.open(url+(url.indexOf('?')>=0?'&':'?')+'action=inbox','_blank');
+}
+async function renderInbox(){
+  const url=getCentralUrl(false);if(!url)return;
+  $('inboxsub').textContent='กำลังเชื่อมต่อระบบกลาง…';
+  $('inboxwrap').innerHTML='<div class="lib-empty">กำลังโหลด…</div>';
+  try{
+    const res=await jsonp(url,{action:'list'});
+    if(!res||!res.ok){throw new Error((res&&res.error)||'โหลดไม่สำเร็จ');}
+    INBOX_CACHE=res.items||[];
+    $('inboxsub').innerHTML='ผู้ใช้: <b>'+esc(res.you||'')+'</b> '+(res.isAdmin?'<span class="pill-mini" style="background:var(--gold-l);color:var(--gold)">แอดมิน — เห็นทุกคน</span>':'<span class="pill-mini">เห็นเฉพาะของคุณ</span>')+' · ทั้งหมด '+(res.count||0)+' รายการ';
+    if(!INBOX_CACHE.length){$('inboxwrap').innerHTML='<div class="lib-empty">ยังไม่มีข้อมูลที่ส่งเข้ามา</div>';return;}
+    $('inboxwrap').innerHTML='<div class="tbl-scroll" style="max-height:60vh"><table>'+
+      '<thead><tr><th>เวลา</th><th>ผู้ส่ง</th><th>รหัสวิชา</th><th>ชื่อวิชา</th><th>ภาค/ปี</th><th>เกณฑ์</th><th>นิสิต</th><th>การทำงาน</th></tr></thead><tbody>'+
+      INBOX_CACHE.map((r,i)=>{
+        const when=r.time?new Date(r.time).toLocaleString('th-TH'):'';
+        return '<tr><td>'+esc(when)+'</td><td>'+esc(r.email)+'</td><td>'+esc(r.code)+'</td><td>'+esc(r.name)+'</td><td>'+esc(r.term)+' '+esc(r.year)+'</td><td>F&lt;'+(r.scheme==='F40'?'40':'50')+'</td><td style="text-align:center">'+(r.nStu||0)+'</td>'+
+          '<td><button class="lib-btn load" onclick="loadFromCentral('+i+')">โหลดเข้าเว็บ</button> '+
+          '<a class="lib-btn" href="'+esc(r.fileUrl)+'" target="_blank" style="text-decoration:none">ไฟล์</a></td></tr>';
+      }).join('')+'</tbody></table></div>';
+  }catch(err){
+    $('inboxsub').textContent='เชื่อมต่อจากในเว็บไม่สำเร็จ';
+    $('inboxwrap').innerHTML='<div class="note-box">ดึงรายการจากในเว็บไม่ได้ (อาจยังไม่ได้เข้าสู่ระบบ Google หรือเบราว์เซอร์บล็อกคุกกี้บุคคลที่สาม)<br>กรุณากด <b>“↗ เปิดรายการในแท็บใหม่”</b> ด้านบนเพื่อดูรายการแทน แล้วดาวน์โหลดไฟล์มาเปิดด้วยปุ่ม “📂 เปิดไฟล์”</div>';
+  }
+}
+async function loadFromCentral(i){
+  const r=INBOX_CACHE[i];if(!r)return;
+  const url=getCentralUrl(false);if(!url)return;
+  toast('กำลังโหลด '+(r.code||'')+'…');
+  try{
+    const res=await jsonp(url,{action:'get',fileId:r.fileId});
+    if(!res||!res.ok)throw new Error((res&&res.error)||'โหลดไม่สำเร็จ');
+    const o=JSON.parse(res.payload);
+    applyState(o.state||freshState(), o.plos||null);
+    closeInbox();go('p-pre');toast('โหลดรายวิชา '+(r.code||'')+' เข้าเว็บแล้ว');
+  }catch(err){
+    toast('โหลดไม่สำเร็จ — ลองเปิดไฟล์จาก Drive แทน');
+  }
+}
+
+function freshState(){return {
+  scheme:'F50',
+  meta:{term:'ภาคต้น',year:2569,code:'',name:'',credits:''},
+  desc:'', objectives:Array(9).fill(''), objCover:'', cloAlign:'',
+  clos:[blankCLO(),blankCLO(),blankCLO()],
+  gradeCrit:{'A':'','B+':'','B':'','C+':'','C':'','D+':'','D':'','F':''},
+  students:[blankStudent(),blankStudent()],
+  post:{note:'',acts:{
+    'Active Learning':{has:'',detail:'',method:'',problem:'',improve:''},
+    'LifeLong Learning':{has:'',detail:'',method:'',problem:'',improve:''},
+    'Innovation/Entrepreneurship':{has:'',detail:'',method:'',problem:'',improve:''},
+    'Test Blueprint':{has:'',detail:'',method:'',problem:'',improve:''}
+  },rows:{}}
+};}
+const ACT_KEYS=['Active Learning','LifeLong Learning','Innovation/Entrepreneurship','Test Blueprint'];
+function clone(x){return JSON.parse(JSON.stringify(x))}
+function updateCourseTag(){
+  const m=state.meta;const nm=[m.code,m.name].filter(Boolean).join(' ');
+  $('course-tag').textContent = nm ? (nm+' · ภาค'+(m.term||'')+' '+(m.year||'')) : '';
+}
+function applyState(ns,nplos){
+  state=ns;
+  if(nplos)CFG.plos=nplos;
+  if(!state.post)state.post={note:'',acts:{},rows:{}};
+  if(!state.post.acts)state.post.acts={};
+  if(!state.post.rows)state.post.rows={};
+  ACT_KEYS.forEach(k=>{if(!state.post.acts[k])state.post.acts[k]={has:'',detail:'',method:'',problem:'',improve:''};});
+  let mx=-1;state.clos.forEach(c=>{if(typeof c._id==='number')mx=Math.max(mx,c._id);});
+  cloSeq=mx+1;state.clos.forEach(c=>{if(typeof c._id!=='number')c._id=cloSeq++;});
+  document.getElementById(state.scheme==='F40'?'sch40':'sch50').checked=true;
+  setScheme(state.scheme||'F50');
+  buildHeaderFields();renderCLO();updateCourseTag();
+}
+
+/* =========================================================
+   SAVE / LOAD (file)
+   ========================================================= */
+function saveProject(){
+  const blob={_app:'course-detail-aunqa',_v:2,state,plos:CFG.plos};
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify(blob,null,2)],{type:'application/json'}));
+  a.download=(state.meta.code||'รายวิชา')+'_บันทึกงาน.json';a.click();
+  toast('บันทึกไฟล์แล้ว');
+}
+function loadProject(e){
+  const f=e.target.files[0];if(!f)return;
+  const r=new FileReader();
+  r.onload=()=>{try{
+    const o=JSON.parse(r.result);
+    applyState(o.state||freshState(), o.plos||null);
+    go('p-pre');toast('เปิดไฟล์แล้ว');
+  }catch(err){toast('ไฟล์ไม่ถูกต้อง');}};
+  r.readAsText(f);e.target.value='';
+}
+function newCourse(fromModal){
+  if(!confirm('เริ่มรายวิชาใหม่? ข้อมูลที่ยังไม่บันทึกลงคลังหรือไฟล์จะหายไป'))return;
+  applyState(freshState());
+  if(fromModal)closeLibrary();
+  go('p-pre');toast('เริ่มรายวิชาใหม่');
+}
+
+/* =========================================================
+   COURSE LIBRARY (per-course, stored in this browser)
+   ========================================================= */
+const LIB_KEY='aunqa_course_library_v1';
+function libRead(){try{const s=localStorage.getItem(LIB_KEY);return s?JSON.parse(s):[];}catch(e){return null;}}
+function libWrite(arr){try{localStorage.setItem(LIB_KEY,JSON.stringify(arr));return true;}catch(e){return false;}}
+function courseKey(){const m=state.meta;return [m.code||'',m.term||'',m.year||''].join('|')||('c'+Date.now());}
+function courseLabel(){const m=state.meta;return (m.code?m.code+' ':'')+(m.name||'(ไม่มีชื่อวิชา)');}
+function openLibrary(){$('libmodal').classList.add('show');renderLibrary();}
+function closeLibrary(){$('libmodal').classList.remove('show');}
+function saveToLibrary(){
+  const lib=libRead();
+  if(lib===null){toast('เบราว์เซอร์นี้บันทึกในเครื่องไม่ได้ — ใช้ “บันทึกไฟล์” แทน');return;}
+  const entry={id:courseKey(),label:courseLabel(),code:state.meta.code,term:state.meta.term,year:state.meta.year,
+    scheme:state.scheme,savedAt:new Date().toISOString(),data:clone({state,plos:CFG.plos})};
+  const i=lib.findIndex(x=>x.id===entry.id);
+  if(i>=0)lib[i]=entry; else lib.push(entry);
+  if(libWrite(lib)){renderLibrary();toast('บันทึกลงคลัง: '+entry.label);} else toast('บันทึกไม่สำเร็จ');
+}
+function loadFromLibrary(id){
+  const lib=libRead()||[];const e=lib.find(x=>x.id===id);if(!e)return;
+  applyState(clone(e.data.state), e.data.plos?clone(e.data.plos):null);
+  closeLibrary();go('p-pre');toast('โหลดรายวิชา: '+e.label);
+}
+function deleteFromLibrary(id){
+  if(!confirm('ลบรายวิชานี้ออกจากคลัง?'))return;
+  let lib=libRead()||[];lib=lib.filter(x=>x.id!==id);libWrite(lib);renderLibrary();
+}
+function exportLibItem(id){
+  const lib=libRead()||[];const e=lib.find(x=>x.id===id);if(!e)return;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([JSON.stringify({_app:'course-detail-aunqa',_v:2,...e.data},null,2)],{type:'application/json'}));
+  a.download=(e.code||'รายวิชา')+'_'+(e.term||'')+(e.year||'')+'.json';a.click();
+}
+function renderLibrary(){
+  const lib=libRead();
+  if(lib===null){$('libwarn').innerHTML='<div class="note-box">เบราว์เซอร์นี้บันทึกในเครื่องไม่ได้ (เช่น โหมดส่วนตัว / ข้อจำกัดของหน้าตัวอย่าง) — กรุณาใช้ปุ่ม “บันทึกไฟล์” เพื่อเก็บงานแต่ละรายวิชาแทน</div>';$('liblist').innerHTML='';return;}
+  $('libwarn').innerHTML='';
+  if(!lib.length){$('liblist').innerHTML='<div class="lib-empty">ยังไม่มีรายวิชาในคลัง — กรอกข้อมูลแล้วกด “บันทึกรายวิชาที่กำลังกรอกลงคลัง”</div>';return;}
+  $('liblist').innerHTML=lib.slice().sort((a,b)=>(b.savedAt||'').localeCompare(a.savedAt||'')).map(e=>{
+    const eid=esc(e.id).replace(/'/g,"\\'");
+    return `<div class="lib-item">
+      <div class="info"><div class="nm">${esc(e.label)}</div>
+        <div class="meta2">เกณฑ์ F&lt;${e.scheme==='F40'?'40':'50'} · ภาค ${esc(e.term||'-')} ${e.year||''} · บันทึก ${new Date(e.savedAt).toLocaleString('th-TH')}</div></div>
+      <div class="bset">
+        <button class="lib-btn load" onclick="loadFromLibrary('${eid}')">โหลด</button>
+        <button class="lib-btn" onclick="exportLibItem('${eid}')">ไฟล์</button>
+        <button class="lib-btn del" onclick="deleteFromLibrary('${eid}')">ลบ</button>
+      </div></div>`;
+  }).join('');
+}
+
+/* =========================================================
+   EXAMPLE (Determinative Bacteriology) — matches the sample file
+   ========================================================= */
+function loadExample(){
+  const s=freshState();
+  s.scheme='F40';
+  s.meta={term:'ภาคต้น',year:2569,code:'30520664',name:'Determinative Bacteriology',credits:'3(2-3-4)'};
+  s.desc='หลักการจัดจำแนกแบคทีเรียกลุ่มต่างๆ วิธีการทดสอบคุณสมบัติทางสรีรวิทยาและชีวเคมีเพื่อใช้ในการจำแนกแบคทีเรีย วิธีการใหม่ในการจัดจำแนกแบคทีเรีย';
+  s.objectives=[
+    'เพื่อฝึกฝนให้ผู้เรียนมีระเบียบวินัย รับผิดชอบต่อหน้าที่และปฏิบัติตามกฎระเบียบที่กำหนดไว้อย่างเคร่งครัด',
+    'เพื่อให้นิสิตตระหนักถึงความรับผิดชอบในการวิจัย การจัดการข้อมูล การหลีกเลี่ยงการลอกเลียนงานวิชาการ และจรรยาบรรณวิชาชีพ',
+    'เพื่อให้นิสิตอธิบายหลักการและขั้นตอนการจำแนกแบคทีเรียด้วยวิธีดั้งเดิม รวมถึงการทดสอบทางสรีรวิทยาและชีวเคมีได้อย่างถูกต้อง',
+    'เพื่อให้นิสิตประเมินและสังเคราะห์งานวิจัยและความก้าวหน้าล่าสุดในด้านการจำแนกแบคทีเรีย',
+    'เพื่อให้นิสิตวิเคราะห์และแก้ไขปัญหาที่เกี่ยวข้องกับการจำแนกแบคทีเรียอย่างมีวิจารณญาณ',
+    'เพื่อให้นิสิตทำงานร่วมกันและแสดงความเป็นผู้นำในงานกลุ่ม',
+    'เพื่อให้นิสิตสืบค้น ประมวลผล และนำเสนอข้อมูลได้อย่างชัดเจน ถูกต้อง และเหมาะสม',
+    'เพื่อให้นิสิตปฏิบัติทุกขั้นตอนของการจำแนกแบคทีเรียขั้นพื้นฐานตามระเบียบปฏิบัติมาตรฐานและรายงานผลได้ถูกต้อง',
+    ''
+  ];
+  s.objCover='ครอบคลุม'; s.cloAlign='สอดคล้อง';
+  const C=(plo,cm,cloNo,detail,dom,lvl,strat,meth,tool,w,note)=>({plo,curmap:cm,cloNo,detail,align:'สอดคล้อง',bloomDomain:dom,bloomLevel:lvl,strategy:strat,method:meth,tool,weight:w,note:note||''});
+  const COG='พุทธพิสัย (Cognitive domain)',AFF='จิตพิสัย (Affective domain)';
+  s.clos=[
+    C('PLO 1','P','1.1','แสดงออกถึงความมีวินัย เคารพระเบียบข้อบังคับ',AFF,'Responding','ปลูกฝังให้ตระหนักถึงวินัย','ตรวจสอบการเข้าชั้นเรียนและการตรงต่อเวลา','ใบบันทึกการเข้าเรียน',1),
+    C('PLO 1','P','1.2','รายงานผลการทดลองและการจำแนกแบคทีเรียอย่างซื่อสัตย์',AFF,'Receiving','ตรวจสอบใบงานส่วนผลการทดลอง','ประเมินความถูกต้องและความน่าเชื่อถือ','ใบบันทึกพฤติกรรมการปฏิบัติงาน',1),
+    C('PLO 2','P','2','เข้าใจหลักการจัดจำแนกแบคทีเรียด้วยวิธีดั้งเดิม',COG,'Remember','บรรยาย/ถาม-ตอบ/อภิปรายกลุ่ม','สอบประเมินผล (กลางภาคและปลายภาค)','ข้อสอบ',66),
+    C('PLO 3','P','3','วิเคราะห์และสังเคราะห์ข้อมูลจากแหล่งข้อมูลที่เชื่อถือได้',COG,'Analyze','บรรยายและให้ศึกษาค้นคว้าด้วยตนเอง','งานมอบหมายกลุ่มสร้าง Infographic','การนำเสนอผ่าน infographic',3),
+    C('PLO 4','P','4','แสดงกระบวนการคิดอย่างเป็นระบบในการวางแผนการจำแนก',COG,'Understand','อธิบายหลักการและวิธีปฏิบัติ','ทักษะการปฏิบัติงาน','ใบบันทึกทักษะการปฏิบัติงาน',9.75),
+    C('PLO 5','R','5','แสดงออกถึงความร่วมมือและการทำงานเป็นทีม',AFF,'Responding','ส่งเสริมทัศนคติแบบยืดหยุ่น','งานมอบหมายกลุ่ม (ประเมินร่วมกับ 3)','การนำเสนอผ่าน infographic',0,'ไม่ประเมินเกรด (ประเมินเฉพาะการบรรลุ)'),
+    C('PLO 6','R','6.1','วิเคราะห์และอภิปรายผลการทดลองอย่างชัดเจน',COG,'Analyze','ออกแบบใบงานสรุปผลการทดลอง','ใบงานส่วนอภิปรายผลการทดลอง','ใบบันทึกทักษะการปฏิบัติงาน',3.25),
+    C('PLO 6','R','6.2','ค้นคว้าและวิเคราะห์ข้อมูลเพื่อการจำแนก',COG,'Analyze','แนะนำและมอบหมายงาน','งานมอบหมายกลุ่ม','การนำเสนอผ่าน infographic',2),
+    C('PLO 7','P','7.1','จำแนกแบคทีเรียด้วยวิธีปฏิบัติมาตรฐาน (การเข้าปฏิบัติการ)',AFF,'Responding','ตั้งกฎเกณฑ์การเข้าชั้นเรียนปฏิบัติการ','การเข้าชั้นเรียนวิชาปฏิบัติการ','ใบบันทึกการเข้ารับการฝึกปฏิบัติ',1),
+    C('PLO 7','P','7.2','จำแนกแบคทีเรียด้วยวิธีปฏิบัติมาตรฐาน (สอบ Spot test)',COG,'Understand','อธิบาย/สาธิต/ฝึกปฏิบัติ','การสอบ Spot test','ข้อสอบ Spot test',13)
+  ];
+  s.gradeCrit={'A':'80 - 100','B+':'75 – 79','B':'70 – 74','C+':'60 – 69','C':'50 – 59','D+':'45 – 49','D':'40 – 44','F':'<40'};
+  s.post.acts['Active Learning']={has:'มี',detail:'งานมอบหมายให้ถ่ายทอดความรู้เกี่ยวกับแบคทีเรียออกมาเป็น infographic ภายในกระดาษแผ่นเดียว',method:'ประเมินจากคะแนนงานมอบหมายโดยอาจารย์ที่รับผิดชอบ',problem:'-',improve:'-'};
+  s.post.acts['LifeLong Learning']={has:'มี',detail:'การเขียนรายงานผลการทดลองที่ต้องค้นคว้าเพิ่มเติมเรื่องประโยชน์/โทษของแบคทีเรียต่อมนุษย์ สัตว์ และสิ่งแวดล้อม',method:'ประเมินจากรายงานในส่วนของอภิปรายผลการทดลอง',problem:'-',improve:'-'};
+  s.post.acts['Innovation/Entrepreneurship']={has:'ไม่มี',detail:'-',method:'-',problem:'-',improve:'-'};
+  s.post.acts['Test Blueprint']={has:'มี',detail:'จัดทำผังข้อสอบเชื่อมโยงข้อสอบแต่ละข้อกับ CLO และระดับ Bloom',method:'ตรวจสอบความครอบคลุมของข้อสอบเทียบกับสัดส่วนคะแนนของแต่ละ CLO',problem:'-',improve:'-'};
+  const exStu=[
+    ['67030035','นางสาว กฤตติณันท์ แก้วดี',[0.92,0.96,26.36,2.06,8.51,'',2.73,1.0,1.0,5.3]],
+    ['67030036','',[0.92,0.85,26.65,2.25,7.58,'',2.55,1.0,0.85,4.3]],
+    ['67030038','',[1.0,1.0,53.2,3.0,8.03,'',2.78,1.5,1.0,9.3]],
+    ['67030039','',[1.0,0.85,37.88,1.88,7.58,'',2.73,1.0,1.0,6.0]],
+    ['67030040','',[1.0,0.85,38.9,3.0,7.28,'',2.6,2.0,1.0,5.0]]
+  ];
+  s.students=exStu.map(r=>({id:r[0],name:r[1],scores:{}}));
+  applyState(s);
+  const cols=activeCLOs();
+  exStu.forEach((r,si)=>{r[2].forEach((v,ci)=>{if(cols[ci]&&v!=='')state.students[si].scores[cols[ci]._id]=v;});});
+  if(cols[0])state.post.rows[cols[0]._id]={gap:'- นิสิตในภาพรวมเข้ารับฟังบรรยายอย่างเคร่งครัด',prev:'',next:''};
+  go('p-pre');toast('โหลดตัวอย่างแล้ว — ลองดูแต่ละแท็บได้เลย');
+}
+
+/* =========================================================
+   EXPORT — EXCEL (multi-sheet) & WORD
+   ========================================================= */
+function buildExportData(){
+  const cols=activeCLOs();
+  const stats=postStats();
+  return {cols,stats};
+}
+function exportExcel(){
+  const wb=XLSX.utils.book_new();
+  const M=state.meta;
+  // Presemester
+  let pre=[['ภาคการศึกษา',M.term,'','ปีการศึกษา',M.year],
+    ['รหัสวิชา',M.code,'','ชื่อวิชา',M.name,'','หน่วยกิต',M.credits],[],
+    ['คำอธิบายรายวิชา:',state.desc],[],['วัตถุประสงค์ของรายวิชา:']];
+  state.objectives.forEach((o,i)=>{if(o)pre.push([(i+1)+')',o]);});
+  pre.push([],['(ทบทวน) วัตถุประสงค์ครอบคลุมคำอธิบายรายวิชา:',state.objCover],
+    ['(ทบทวน) CLOs สอดคล้องกับวัตถุประสงค์รายวิชา:',state.cloAlign],[]);
+  pre.push(['ด้าน TQF','PLO No.','คำอธิบาย PLO','Cur.Map','CLO No.','รายละเอียด CLO','CLO/PLO สอดคล้อง',"Bloom's Taxonomy",'Level','กลยุทธ์การสอน','วิธีการประเมิน','เครื่องมือประเมิน','สัดส่วน(%)','หมายเหตุ']);
+  state.clos.forEach(c=>{const p=ploByNo(c.plo)||{};pre.push([p.tqf||'',c.plo,p.desc||'',c.curmap,c.cloNo,c.detail,c.align,c.bloomDomain,c.bloomLevel,c.strategy,c.method,c.tool,c.weight,c.note]);});
+  pre.push(['','','','','','','','','','','','Sum',state.clos.reduce((s,c)=>s+(num(c.weight)||0),0)]);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(pre),'Presemester');
+  // สัดส่วนของคะแนน
+  let sc=[['ภาคการศึกษา',M.term,'','ปีการศึกษา',M.year],['รหัสวิชา',M.code,'','ชื่อวิชา',M.name,'','หน่วยกิต',M.credits],[],
+    ['PLOs No.','CLO No.','เครื่องมือประเมิน','สัดส่วน(%)','','การประเมินผล(อิงเกณฑ์)']];
+  state.clos.forEach((c,i)=>{const row=[c.plo,c.cloNo,c.tool,c.weight];const g=GRADE_ORDER[i];if(g){row.push('',g,state.gradeCrit[g]);}sc.push(row);});
+  sc.push(['','Sum',state.clos.reduce((s,c)=>s+(num(c.weight)||0),0)]);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(sc),'สัดส่วนของคะแนน');
+  // ประเมิน
+  const {cols,stats}=buildExportData();
+  const head=['ลำดับ','รหัสนิสิต','ชื่อ-นามสกุล',...cols.map(c=>`CLO ${c.cloNo} (เต็ม ${c.weight})`),'รวม','เกรด'];
+  let ev=[['ประเมินผล (เกณฑ์ F < '+(state.scheme==='F50'?'50':'40')+')'],['รหัสวิชา',M.code,'ภาค',M.term,'ปี',M.year],[],head];
+  state.students.forEach((st,si)=>{let t=0,any=false;const r=[si+1,st.id,st.name];cols.forEach(c=>{const v=num(st.scores[c._id]);r.push(v==null?'':v);if(v!=null){t+=v;any=true;}});r.push(any?t:'',gradeOf(any?t:null));ev.push(r);});
+  ev.push(['','Mean','',...stats.map(s=>s.mean==null?'':+fmt(s.mean))]);
+  ev.push(['','Min','',...stats.map(s=>s.mn==null?'':s.mn)]);
+  ev.push(['','Max','',...stats.map(s=>s.mx==null?'':s.mx)]);
+  ev.push(['','% ที่ได้รับ','',...stats.map(s=>s.pct==null?'':+fmt(s.pct,1))]);
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ev),'ประเมิน F<'+(state.scheme==='F50'?'50':'40'));
+  // PostSemester
+  let ps=[['PostSemester (เกณฑ์ F < '+(state.scheme==='F50'?'50':'40')+')'],['รหัสวิชา',M.code,'ภาค',M.term,'ปี',M.year],[]];
+  Object.keys(state.post.acts).forEach(k=>{const a=state.post.acts[k];ps.push(['กิจกรรม '+k,a.has,'กิจกรรม:',a.detail,'วิธีประเมิน:',a.method,'ปัญหา:',a.problem,'แนวทาง:',a.improve]);});
+  ps.push(['หมายเหตุ:',state.post.note],[]);
+  ps.push(['CLO No.','รายละเอียด CLO','PLO','สัดส่วน(%)','Min','Max','Mean','%ที่ได้รับ','เกณฑ์บรรลุ(%)','ผลเปรียบเทียบ','Gap/การตีความ','ข้อปรับปรุงจากปีก่อน','แนวทางครั้งต่อไป']);
+  stats.forEach(s=>{const r=state.post.rows[s.c._id]||{};ps.push([s.c.cloNo,s.c.detail,s.c.plo,s.full,s.mn,s.mx,s.mean==null?'':+fmt(s.mean),s.pct==null?'':+fmt(s.pct,1),s.th,s.result,r.gap||'',r.prev||'',r.next||'']);});
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ps),'PostSemester F<'+(state.scheme==='F50'?'50':'40'));
+  XLSX.writeFile(wb,(M.code||'รายวิชา')+'_AUN-QA.xlsx');
+  toast('ส่งออก Excel แล้ว');
+}
+function tbl(headers,rows){
+  return `<table border="1" cellspacing="0" cellpadding="4" style="border-collapse:collapse;width:100%;font-size:11pt">
+    <tr>${headers.map(h=>`<th style="background:#0a474a;color:#fff">${h}</th>`).join('')}</tr>
+    ${rows.map(r=>`<tr>${r.map(c=>`<td>${c==null?'':String(c)}</td>`).join('')}</tr>`).join('')}</table>`;
+}
+function exportWord(){
+  const M=state.meta;const sname=state.scheme==='F50'?'50':'40';
+  const {cols,stats}=buildExportData();
+  let h=`<html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+  <head><meta charset='utf-8'><title>รายละเอียดรายวิชา</title>
+  <style>body{font-family:'TH Sarabun New','Sarabun',sans-serif;font-size:14pt;color:#1b2733}
+  h1{font-size:20pt;color:#0a474a}h2{font-size:16pt;color:#0a474a;border-bottom:2px solid #b8862f;padding-bottom:3px;margin-top:22px}
+  table{margin:6px 0}.kv{margin:2px 0}</style></head><body>`;
+  h+=`<h1>แบบรายละเอียดรายวิชาเพื่อจัดทำ SAR (AUN-QA v4.0)</h1>`;
+  h+=`<p class=kv><b>ภาคการศึกษา:</b> ${M.term} &nbsp; <b>ปีการศึกษา:</b> ${M.year} &nbsp; <b>เกณฑ์เกรด:</b> F &lt; ${sname}</p>`;
+  h+=`<p class=kv><b>รหัสวิชา:</b> ${M.code} &nbsp; <b>ชื่อวิชา:</b> ${M.name} &nbsp; <b>หน่วยกิต:</b> ${M.credits}</p>`;
+  h+=`<h2>คำอธิบายรายวิชา</h2><p>${state.desc||'-'}</p>`;
+  h+=`<h2>วัตถุประสงค์ของรายวิชา</h2><ol>${state.objectives.filter(o=>o).map(o=>`<li>${o}</li>`).join('')||'<li>-</li>'}</ol>`;
+  h+=`<p class=kv><b>(ทบทวน) วัตถุประสงค์ครอบคลุมคำอธิบายรายวิชา:</b> ${state.objCover||'-'}</p>`;
+  h+=`<p class=kv><b>(ทบทวน) CLOs สอดคล้องกับวัตถุประสงค์รายวิชา:</b> ${state.cloAlign||'-'}</p>`;
+  h+=`<h2>ตาราง CLO</h2>`+tbl(['PLO','ด้าน TQF','CLO No.','รายละเอียด CLO','Bloom','Level','กลยุทธ์การสอน','วิธีประเมิน','เครื่องมือ','%'],
+    state.clos.map(c=>{const p=ploByNo(c.plo)||{};return [c.plo,p.tqf||'',c.cloNo,c.detail,c.bloomDomain,c.bloomLevel,c.strategy,c.method,c.tool,c.weight];}));
+  h+=`<h2>สัดส่วนของคะแนน & เกณฑ์การให้เกรด</h2>`+tbl(['PLO','CLO','เครื่องมือประเมิน','สัดส่วน(%)'],state.clos.map(c=>[c.plo,c.cloNo,c.tool,c.weight]));
+  h+=tbl(['เกรด','ช่วงคะแนน'],GRADE_ORDER.map(g=>[g,state.gradeCrit[g]]));
+  h+=`<h2>ประเมินผล (F &lt; ${sname})</h2>`+tbl(['ลำดับ','รหัสนิสิต','ชื่อ-นามสกุล',...cols.map(c=>'CLO '+c.cloNo),'รวม','เกรด'],
+    state.students.map((st,si)=>{let t=0,a=false;const r=[si+1,st.id,st.name];cols.forEach(c=>{const v=num(st.scores[c._id]);r.push(v==null?'':v);if(v!=null){t+=v;a=true;}});r.push(a?fmt(t,2):'',gradeOf(a?t:null));return r;}));
+  h+=tbl(['สถิติ',...cols.map(c=>'CLO '+c.cloNo)],[
+    ['Mean',...stats.map(s=>fmt(s.mean))],['Min',...stats.map(s=>fmt(s.mn))],['Max',...stats.map(s=>fmt(s.mx))],['% ที่ได้รับ',...stats.map(s=>fmt(s.pct,1))]]);
+  h+=`<h2>PostSemester (F &lt; ${sname})</h2>`;
+  Object.keys(state.post.acts).forEach(k=>{const a=state.post.acts[k];h+=`<p class=kv><b>กิจกรรม ${k}:</b> ${a.has||'-'} | ${a.detail||''} | ประเมิน: ${a.method||''} | ปัญหา: ${a.problem||''} | แนวทาง: ${a.improve||''}</p>`;});
+  if(state.post.note)h+=`<p class=kv><b>หมายเหตุ:</b> ${state.post.note}</p>`;
+  h+=tbl(['CLO','รายละเอียด','PLO','%เต็ม','Min','Max','Mean','%ที่ได้รับ','เกณฑ์(%)','ผล','Gap/การตีความ','ข้อปรับปรุงปีก่อน','แนวทางครั้งต่อไป'],
+    stats.map(s=>{const r=state.post.rows[s.c._id]||{};return [s.c.cloNo,s.c.detail,s.c.plo,s.full,fmt(s.mn),fmt(s.mx),fmt(s.mean),fmt(s.pct,1),s.th,s.result,r.gap||'',r.prev||'',r.next||''];}));
+  h+=`</body></html>`;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob(['\ufeff'+h],{type:'application/msword'}));
+  a.download=(M.code||'รายวิชา')+'_AUN-QA.doc';a.click();
+  toast('ส่งออก Word แล้ว');
+}
+
+/* =========================================================
+   INIT
+   ========================================================= */
+buildTabs();
+buildHeaderFields();
+renderCLO();
+updateCourseTag();
+</script>
+</body>
+</html>
