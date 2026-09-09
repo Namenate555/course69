@@ -118,6 +118,15 @@
   .chk:hover{border-color:var(--gold);background:#fffdf6}
   .chk input{position:absolute;left:11px;top:9px;margin:0;cursor:pointer}
   .ex-ev{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:13px;background:#fff}
+  .file-add{display:inline-block;background:#fff;border:1px dashed var(--gold);color:#6a4e10;border-radius:6px;padding:6px 14px;font-size:12.5px;font-weight:600;cursor:pointer}
+  .file-add:hover{background:#fffdf6}
+  .file-chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
+  .file-none{font-size:12px;color:#8a97a4}
+  .fchip{display:inline-flex;align-items:center;gap:8px;background:#fff;border:1px solid var(--line);border-radius:6px;padding:5px 8px 5px 10px;font-size:12.5px;max-width:100%}
+  .fchip .fname{color:var(--teal);cursor:pointer;text-decoration:underline;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:230px}
+  .fchip .fname:hover{color:var(--teal-d)}
+  .fchip .fsize{color:#8a97a4;font-size:11.5px;flex:0 0 auto}
+  .fchip .fdel{border:none;background:none;color:var(--bad);font-size:16px;line-height:1;cursor:pointer;padding:0 2px;flex:0 0 auto}
   .post-act .lbl{font-weight:600;color:var(--ink-soft);font-size:13.5px;padding-top:8px}
   @media(max-width:860px){.g2,.g3,.g4{grid-template-columns:1fr}.post-act{grid-template-columns:1fr}}
   footer{text-align:center;color:#9aa6b1;font-size:12px;padding:20px}
@@ -926,11 +935,72 @@ function actExtra(k,a){
     const on=sel[it.name]?'checked':'';
     return `<label class="chk" title="${tip}"><input type="checkbox" ${on} onchange="setActMethod('${k}','${kind}',${idx},this.checked)"><span>${esc(it.name)}</span></label>`;
   }).join('');
+  const kid=k.replace(/[^A-Za-z]/g,'');
   return `<div class="act-extra">
     <div class="ex-lbl">${label}</div>
     <div class="chk-grid">${chips}</div>
     <input class="ex-ev" placeholder="หลักฐานที่เก็บได้ (รวม)" value="${esc(a.evidence||'')}" oninput="state.post.acts['${k}'].evidence=this.value">
+    <div class="ex-files">
+      <div class="ex-lbl" style="margin:10px 0 6px">แนบไฟล์เอกสารหลักฐาน (ไม่บังคับ · PDF / รูปภาพ / Word / Excel):</div>
+      <label class="file-add">＋ เลือกไฟล์
+        <input type="file" multiple style="display:none" accept=".pdf,image/*,.doc,.docx,.xls,.xlsx,.ppt,.pptx"
+          onchange="addActFiles('${k}',this.files);this.value=''">
+      </label>
+      <div class="file-chips" id="files-${kid}">${fileChips(k,a)}</div>
+    </div>
   </div>`;
+}
+function fileChips(k,a){
+  const files=a.files||[];
+  if(!files.length)return '<span class="file-none">ยังไม่มีไฟล์แนบ</span>';
+  return files.map((f,i)=>`<span class="fchip">
+      <span class="fname" title="${esc(f.name)}" onclick="openActFile('${k}',${i})">📄 ${esc(f.name)}</span>
+      <span class="fsize">${fmtSize(f.size)}</span>
+      <button class="fdel" title="ลบไฟล์นี้" onclick="removeActFile('${k}',${i})">×</button>
+    </span>`).join('');
+}
+function fmtSize(n){ n=+n||0; return n<1024?n+' B':n<1048576?(n/1024).toFixed(0)+' KB':(n/1048576).toFixed(1)+' MB'; }
+function refreshActFiles(k){
+  const kid=k.replace(/[^A-Za-z]/g,'');
+  const el=$('files-'+kid); if(el)el.innerHTML=fileChips(k,state.post.acts[k]);
+}
+const MAX_FILE=6*1024*1024; // 6 MB ต่อไฟล์
+function addActFiles(k,fileList){
+  const a=state.post.acts[k]; if(!a)return; if(!a.files)a.files=[];
+  const files=Array.from(fileList||[]);
+  let pending=files.length, skipped=[];
+  if(!pending)return;
+  files.forEach(file=>{
+    if(file.size>MAX_FILE){ skipped.push(file.name); if(--pending===0)done(); return; }
+    const r=new FileReader();
+    r.onload=()=>{ a.files.push({name:file.name,type:file.type||'',size:file.size,data:r.result}); if(--pending===0)done(); };
+    r.onerror=()=>{ skipped.push(file.name); if(--pending===0)done(); };
+    r.readAsDataURL(file); // เก็บเป็น data URL (base64) ฝังไปกับข้อมูล
+  });
+  function done(){
+    refreshActFiles(k);
+    let msg='แนบไฟล์แล้ว';
+    if(skipped.length)msg='ข้ามไฟล์ที่ใหญ่เกิน 6 MB: '+skipped.join(', ');
+    toast(msg);
+  }
+}
+function removeActFile(k,i){
+  const a=state.post.acts[k]; if(!a||!a.files)return;
+  if(!confirm('ลบไฟล์แนบ “'+(a.files[i]&&a.files[i].name)+'” ?'))return;
+  a.files.splice(i,1); refreshActFiles(k);
+}
+function openActFile(k,i){
+  const a=state.post.acts[k]; if(!a||!a.files||!a.files[i])return;
+  const f=a.files[i];
+  try{
+    const parts=String(f.data).split(',');const bin=atob(parts[1]||'');const len=bin.length;
+    const buf=new Uint8Array(len); for(let j=0;j<len;j++)buf[j]=bin.charCodeAt(j);
+    const blob=new Blob([buf],{type:f.type||'application/octet-stream'});
+    const url=URL.createObjectURL(blob);
+    const w=window.open(url,'_blank');
+    if(!w){ const link=document.createElement('a');link.href=url;link.download=f.name;link.click(); }
+    setTimeout(()=>URL.revokeObjectURL(url),60000);
+  }catch(e){ toast('เปิดไฟล์ไม่สำเร็จ'); }
 }
 function renderPost(){
   setScheme(state.scheme);
@@ -1360,7 +1430,7 @@ function exportExcel(){
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ev),'ประเมิน F<'+(state.scheme==='F50'?'50':'40'));
   // PostSemester
   let ps=[['PostSemester (เกณฑ์ F < '+(state.scheme==='F50'?'50':'40')+')'],['รหัสวิชา',M.code,'ภาค',M.term,'ปี',M.year],[]];
-  Object.keys(state.post.acts).forEach(k=>{const a=state.post.acts[k];const m=Object.keys(a.methods||{}).join(', ');ps.push(['กิจกรรม '+k,a.has,'กิจกรรม:',a.detail,'วิธีประเมิน:',a.method,'ปัญหา:',a.problem,'แนวทาง:',a.improve,'วิธี/ทักษะที่เลือก:',m,'หลักฐาน:',a.evidence||'']);});
+  Object.keys(state.post.acts).forEach(k=>{const a=state.post.acts[k];const m=Object.keys(a.methods||{}).join(', ');const fn=(a.files||[]).map(f=>f.name).join(', ');ps.push(['กิจกรรม '+k,a.has,'กิจกรรม:',a.detail,'วิธีประเมิน:',a.method,'ปัญหา:',a.problem,'แนวทาง:',a.improve,'วิธี/ทักษะที่เลือก:',m,'หลักฐาน:',a.evidence||'','ไฟล์แนบ:',fn]);});
   ps.push(['หมายเหตุ:',state.post.note],[]);
   ps.push(['CLO No.','รายละเอียด CLO','PLO','สัดส่วน(%)','Min','Max','Mean','%ที่ได้รับ','เกณฑ์บรรลุ(%)','ผลเปรียบเทียบ','Gap/การตีความ','ข้อปรับปรุงจากปีก่อน','แนวทางครั้งต่อไป']);
   stats.forEach(s=>{const r=state.post.rows[s.c._id]||{};ps.push([s.c.cloNo,s.c.detail,s.c.plo,s.full,s.mn,s.mx,s.mean==null?'':+fmt(s.mean),s.pct==null?'':+fmt(s.pct,1),s.th,s.result,r.gap||'',r.prev||'',r.next||'']);});
@@ -1397,7 +1467,7 @@ function exportWord(){
   h+=tbl(['สถิติ',...cols.map(c=>'CLO '+c.cloNo)],[
     ['Mean',...stats.map(s=>fmt(s.mean))],['Min',...stats.map(s=>fmt(s.mn))],['Max',...stats.map(s=>fmt(s.mx))],['% ที่ได้รับ',...stats.map(s=>fmt(s.pct,1))]]);
   h+=`<h2>PostSemester (F &lt; ${sname})</h2>`;
-  Object.keys(state.post.acts).forEach(k=>{const a=state.post.acts[k];const m=Object.keys(a.methods||{}).join(', ');h+=`<p class=kv><b>กิจกรรม ${k}:</b> ${a.has||'-'} | ${a.detail||''} | ประเมิน: ${a.method||''} | ปัญหา: ${a.problem||''} | แนวทาง: ${a.improve||''}${m?' | วิธี/ทักษะ: '+m:''}${a.evidence?' | หลักฐาน: '+a.evidence:''}</p>`;});
+  Object.keys(state.post.acts).forEach(k=>{const a=state.post.acts[k];const m=Object.keys(a.methods||{}).join(', ');h+=`<p class=kv><b>กิจกรรม ${k}:</b> ${a.has||'-'} | ${a.detail||''} | ประเมิน: ${a.method||''} | ปัญหา: ${a.problem||''} | แนวทาง: ${a.improve||''}${m?' | วิธี/ทักษะ: '+m:''}${a.evidence?' | หลักฐาน: '+a.evidence:''}${(a.files||[]).length?' | ไฟล์แนบ: '+(a.files||[]).map(f=>f.name).join(', '):''}</p>`;});
   if(state.post.note)h+=`<p class=kv><b>หมายเหตุ:</b> ${state.post.note}</p>`;
   h+=tbl(['CLO','รายละเอียด','PLO','%เต็ม','Min','Max','Mean','%ที่ได้รับ','เกณฑ์(%)','ผล','Gap/การตีความ','ข้อปรับปรุงปีก่อน','แนวทางครั้งต่อไป'],
     stats.map(s=>{const r=state.post.rows[s.c._id]||{};return [s.c.cloNo,s.c.detail,s.c.plo,s.full,fmt(s.mn),fmt(s.mx),fmt(s.mean),fmt(s.pct,1),s.th,s.result,r.gap||'',r.prev||'',r.next||''];}));
