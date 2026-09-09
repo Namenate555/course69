@@ -183,6 +183,11 @@
     </div>
     <div class="spacer"></div>
     <span id="course-tag" class="course-tag" title="รายวิชาที่กำลังกรอก"></span>
+    <div class="scheme-pill" title="เลือกหลักสูตร (ชุด PLO และ Cur.Map)">
+      <span style="color:#d9e6e6">หลักสูตร:</span>
+      <input type="radio" name="curr" id="cur64" value="64" checked onchange="askSetCurriculum('64')"><label for="cur64">64</label>
+      <input type="radio" name="curr" id="cur69" value="69" onchange="askSetCurriculum('69')"><label for="cur69">69</label>
+    </div>
     <div class="scheme-pill" title="เลือกเกณฑ์การตัดเกรดของรายวิชา">
       <span style="color:#d9e6e6">เกณฑ์เกรด:</span>
       <input type="radio" name="scheme" id="sch50" value="F50" checked onchange="setScheme('F50')"><label for="sch50">F &lt; 50</label>
@@ -256,17 +261,15 @@
       </div>
     </div>
 
-    <div class="card">
-      <h2>ระดับความรับผิดชอบของรายวิชาต่อ PLO (Cur. Map: I–R–P–M)</h2>
-      <p class="sub">ใช้เลือกในคอลัมน์ Cur.Map ของตาราง CLO — บอกว่ารายวิชารับผิดชอบพัฒนา PLO นั้นในระดับใด</p>
+    <div class="card" id="curmap-card">
+      <h2>Curriculum Mapping (Cur. Map): สี่เหลี่ยมทึบ / สี่เหลี่ยมโปร่ง</h2>
+      <p class="sub">ใช้เลือกในคอลัมน์ Cur.Map ของตาราง CLO — บอกระดับความรับผิดชอบของรายวิชาต่อ PLO นั้น</p>
       <div class="tbl-scroll">
         <table>
-          <thead><tr><th>ระดับ</th><th>ความหมาย</th><th>สิ่งที่ควรปรากฏใน CLO</th></tr></thead>
+          <thead><tr><th>สัญลักษณ์</th><th>ความหมาย</th><th>เมื่อใดควรเลือก</th></tr></thead>
           <tbody>
-            <tr><td><b>I — Introduce</b></td><td>เริ่มแนะนำ/วางพื้นฐานของ PLO ให้นิสิตรู้จักแนวคิด ทักษะ หรือวิธีปฏิบัติขั้นต้น</td><td>อธิบาย ระบุ ปฏิบัติตามขั้นตอนพื้นฐาน หรือใช้ความรู้เบื้องต้น</td></tr>
-            <tr><td><b>R — Reinforce</b></td><td>ทบทวนและเสริมความรู้/ทักษะเดิม เพิ่มความซับซ้อนหรือฝึกใช้ในบริบทใหม่</td><td>ประยุกต์ใช้ เปรียบเทียบ วิเคราะห์ขั้นต้น หรือฝึกปฏิบัติซ้ำอย่างมีเหตุผล</td></tr>
-            <tr><td><b>P — Proficient</b></td><td>ปฏิบัติ/แสดงสมรรถนะตาม PLO ได้อย่างมีประสิทธิภาพและค่อนข้างเป็นอิสระ</td><td>วิเคราะห์ ประยุกต์ ตัดสินใจ ออกแบบ แก้ปัญหาในสถานการณ์ใกล้เคียงงานจริง</td></tr>
-            <tr><td><b>M — Mastery</b></td><td>แสดงสมรรถนะขั้นสูง บูรณาการความรู้และทักษะหลายด้านเพื่อแก้ปัญหาซับซ้อน</td><td>บูรณาการ วิเคราะห์เชิงลึก ประเมินทางเลือก สร้างแนวทางแก้ปัญหา</td></tr>
+            <tr><td><b>▪️ สี่เหลี่ยมทึบ</b></td><td>รายวิชารับผิดชอบ PLO นั้นเป็นหลัก (Major responsibility)</td><td>เมื่อรายวิชาจัดการเรียนการสอนและการประเมินที่พัฒนา PLO นั้นอย่างชัดเจนและเป็นสาระสำคัญ</td></tr>
+            <tr><td><b>▫️ สี่เหลี่ยมโปร่ง</b></td><td>รายวิชารับผิดชอบ PLO นั้นเป็นรอง/สนับสนุน (Minor responsibility)</td><td>เมื่อรายวิชาช่วยเสริมหรือสนับสนุน PLO นั้นบางส่วน แต่ไม่ใช่ความรับผิดชอบหลัก</td></tr>
           </tbody>
         </table>
       </div>
@@ -328,7 +331,7 @@
         <table id="clotable">
           <thead><tr>
             <th>#</th><th style="min-width:150px">PLO No.</th><th style="min-width:160px">ด้าน TQF (อัตโนมัติ)</th>
-            <th style="min-width:230px">คำอธิบาย PLO (อัตโนมัติ)</th><th title="Introduce / Reinforce / Proficient / Mastery">Cur.Map<br>(I/R/P/M)</th><th>CLO No.</th>
+            <th style="min-width:230px">คำอธิบาย PLO (อัตโนมัติ)</th><th id="curmap-hd" title="▪️ ทึบ = รับผิดชอบหลัก · ▫️ โปร่ง = รับผิดชอบรอง">Cur.Map<br>(▪️ / ▫️)</th><th>CLO No.</th>
             <th style="min-width:200px">รายละเอียด CLO</th><th style="min-width:140px">CLO/PLO สอดคล้องกับ Curriculum Mapping</th>
             <th style="min-width:180px">Bloom's Taxonomy</th><th style="min-width:150px">Level of Bloom</th>
             <th style="min-width:160px">กลยุทธ์การสอน</th><th style="min-width:160px">วิธีการประเมิน</th>
@@ -488,7 +491,7 @@ let CENTRAL_URL = '';
 const CFG = {
   terms:['ภาคต้น','ภาคปลาย','ฤดูร้อน'],
   years:Array.from({length:20},(_,i)=>2569+i),
-  curmap:['I','R','P','M'],
+  curmap:[],
   alignCLO:['สอดคล้อง','ไม่สอดคล้อง'],
   objCover:['ครอบคลุม','ไม่ครอบคลุม'],
   hasOpt:['มี','ไม่มี'],
@@ -497,15 +500,7 @@ const CFG = {
     'จิตพิสัย (Affective domain)':['Receiving','Responding','Valuing','Organization','Characterization'],
     'ทักษะพิสัย (Psychomotor domain)':['Reflex','Basic fundamental movements','Perceptual abilities','Physical abilities','Skilled movements','Non-discursive communication']
   },
-  plos:[
-    {no:'PLO 1',tqf:'ด้านจริยธรรม',desc:'PLO 1 ยึดหลักจริยธรรมของนักวิทยาศาสตร์ และจรรยาบรรณแห่งวิชาชีพ โดยไม่คัดลอกผลงานทางวิชาการและรายงานผลการปฏิบัติงานด้านวิชาชีพตามความเป็นจริง',th:70},
-    {no:'PLO 2',tqf:'ด้านความรู้',desc:'PLO 2 ประยุกต์ความรู้ทางจุลชีววิทยาในระบบการผลิตของอุตสาหกรรมอาหาร หรืออุตสาหกรรมที่เกี่ยวข้องและสนับสนุนกับอุตสาหกรรมอาหาร เพื่อการผลิตและพัฒนาผลิตภัณฑ์ โดยยึดหลักความปลอดภัยทางชีวภาพและจุลชีววิทยา',th:50},
-    {no:'PLO 3',tqf:'ด้านทักษะ',desc:'PLO 3 ค้นคว้าองค์ความรู้หรือนวัตกรรมจากแหล่งข้อมูลที่เชื่อถือได้ทุกครั้งเมื่อมีการวิเคราะห์จุลินทรีย์และพัฒนาผลิตภัณฑ์ในอุตสาหกรรมอาหาร',th:70},
-    {no:'PLO 4',tqf:'ด้านคุณลักษณะ',desc:'PLO 4 ใช้กระบวนการคิดอย่างเป็นระบบในการตัดสินใจและแก้ไขปัญหาในการปฏิบัติงานทางด้านจุลชีววิทยา',th:70},
-    {no:'PLO 5',tqf:'ด้านคุณลักษณะ',desc:'PLO 5 แสดงบุคลิกภาพของการมีทัศนคติและแนวคิดแบบยืดหยุ่น เป็นผู้นำและผู้ตามที่ดีในสถานการณ์ที่ต้องปฏิบัติงานร่วมกับผู้อื่น',th:70},
-    {no:'PLO 6',tqf:'ด้านจริยธรรม',desc:'PLO 6 วิเคราะห์ข้อมูลหรือชุดข้อมูลได้ด้วยการใช้ทักษะดิจิทัลและโปรแกรมวิเคราะห์ทางด้านชีวสารสนเทศ',th:70},
-    {no:'PLO 7',tqf:'ด้านทักษะ',desc:'PLO 7 วิเคราะห์จุลินทรีย์ในห่วงโซ่คุณค่าของอุตสาหกรรมอาหารได้ด้วยวิธีมาตรฐานสากล',th:70}
-  ],
+  plos:[],
   alMethods:[
     {name:'Interactive lecture',meaning:'บรรยายแบบมีปฏิสัมพันธ์ ให้ผู้เรียนมีส่วนร่วมระหว่างบรรยาย',example:'ตั้งคำถามระหว่างบรรยาย / ให้ตอบสั้น ๆ',evidence:'บันทึกการมีส่วนร่วม / แบบสอบถาม'},
     {name:'Case-based learning',meaning:'เรียนรู้จากกรณีศึกษา แล้ววิเคราะห์เหตุและผล',example:'กรณีอาหารปนเปื้อน จุลินทรีย์เสีย หรือผลิตภัณฑ์หมักมีปัญหา',evidence:'ใบงาน / คำตอบ / คะแนน rubric'},
@@ -529,6 +524,86 @@ const CFG = {
     {name:'สะท้อนและพัฒนาตนเอง',meaning:'ประเมินการเรียนรู้ของตนและวางแผนพัฒนาต่อ',example:'reflection หลังงานกลุ่มหรือโครงงาน',evidence:'reflection'}
   ]
 };
+/* ===== ชุดหลักสูตร (สลับ 64 / 69 ได้) ===== */
+const CURRICULA = {
+  '64':{
+    curmap:['▪️','▫️'],
+    hdrSub:'(▪️ / ▫️)', hdrTip:'▪️ ทึบ = รับผิดชอบหลัก · ▫️ โปร่ง = รับผิดชอบรอง',
+    cardTitle:'Curriculum Mapping (Cur. Map): สี่เหลี่ยมทึบ / สี่เหลี่ยมโปร่ง',
+    cardSub:'ใช้เลือกในคอลัมน์ Cur.Map ของตาราง CLO — บอกระดับความรับผิดชอบของรายวิชาต่อ PLO นั้น',
+    cardHead:['สัญลักษณ์','ความหมาย','เมื่อใดควรเลือก'],
+    cardRows:[
+      ['▪️ สี่เหลี่ยมทึบ','รายวิชารับผิดชอบ PLO นั้นเป็นหลัก (Major responsibility)','เมื่อรายวิชาจัดการเรียนการสอนและการประเมินที่พัฒนา PLO นั้นอย่างชัดเจนและเป็นสาระสำคัญ'],
+      ['▫️ สี่เหลี่ยมโปร่ง','รายวิชารับผิดชอบ PLO นั้นเป็นรอง/สนับสนุน (Minor responsibility)','เมื่อรายวิชาช่วยเสริมหรือสนับสนุน PLO นั้นบางส่วน แต่ไม่ใช่ความรับผิดชอบหลัก']
+    ],
+    plos:[
+      {no:'PLO 1',tqf:'ด้านคุณธรรม จริยธรรม',desc:'PLO 1 ยึดหลักจริยธรรมของนักวิทยาศาสตร์ และจรรยาบรรณแห่งวิชาชีพ โดยไม่คัดลอกผลงานทางวิชาการและรายงานผลการปฏิบัติงานด้านวิชาชีพตามความเป็นจริง',th:70},
+      {no:'PLO 2',tqf:'ด้านความรู้',desc:'PLO 2 ประยุกต์ความรู้ทางจุลชีววิทยาเพื่อการวิเคราะห์จุลินทรีย์หรือพัฒนาผลิตภัณฑ์ในอุตสาหกรรมจุลินทรีย์ด้านอาหาร การแพทย์ เกษตรกรรมหรือสิ่งแวดล้อมได้',th:50},
+      {no:'PLO 3',tqf:'ด้านทักษะทางปัญญา',desc:'PLO 3 ค้นคว้าองค์ความรู้หรือนวัตกรรมจากแหล่งข้อมูลที่เชื่อถือได้ทุกครั้งเมื่อมีการวิเคราะห์จุลินทรีย์หรือพัฒนาผลิตภัณฑ์ในอุตสาหกรรมจุลินทรีย์',th:70},
+      {no:'PLO 4',tqf:'ด้านทักษะทางปัญญา',desc:'PLO 4 ใช้กระบวนการคิดอย่างเป็นระบบในการตัดสินใจและแก้ไขปัญหาในการปฏิบัติงานทางด้านจุลชีววิทยา',th:70},
+      {no:'PLO 5',tqf:'ด้านความสัมพันธ์ระหว่างบุคคลและความรับผิดชอบ',desc:'PLO 5 แสดงบุคลิกภาพของการมีทัศนคติและแนวคิดแบบยืดหยุ่น เป็นผู้นำและผู้ตามที่ดีในสถานการณ์ที่ต้องปฏิบัติงานร่วมกับผู้อื่น',th:70},
+      {no:'PLO 6',tqf:'ด้านทักษะเชิงตัวเลข เทคโนโลยีสารสนเทศและการสื่อสาร',desc:'PLO 6 วิเคราะห์ข้อมูลหรือชุดข้อมูลได้ด้วยการใช้ทักษะเชิงตัวเลข เทคโนโลยีสารสนเทศและดิจิทัล และสื่อสารได้อย่างมีประสิทธิภาพ',th:70},
+      {no:'PLO 7',tqf:'ทักษะปฏิบัติเฉพาะอาชีพ',desc:'PLO 7 วิเคราะห์จุลินทรีย์ได้ด้วยวิธีมาตรฐานสากล',th:70}
+    ]
+  },
+  '69':{
+    curmap:['I','R','P','M'],
+    hdrSub:'(I/R/P/M)', hdrTip:'Introduce / Reinforce / Proficient / Mastery',
+    cardTitle:'ระดับความรับผิดชอบของรายวิชาต่อ PLO (Cur. Map: I–R–P–M)',
+    cardSub:'ใช้เลือกในคอลัมน์ Cur.Map ของตาราง CLO — บอกว่ารายวิชารับผิดชอบพัฒนา PLO นั้นในระดับใด',
+    cardHead:['ระดับ','ความหมาย','สิ่งที่ควรปรากฏใน CLO'],
+    cardRows:[
+      ['I — Introduce','เริ่มแนะนำ/วางพื้นฐานของ PLO ให้นิสิตรู้จักแนวคิด ทักษะ หรือวิธีปฏิบัติขั้นต้น','อธิบาย ระบุ ปฏิบัติตามขั้นตอนพื้นฐาน หรือใช้ความรู้เบื้องต้น'],
+      ['R — Reinforce','ทบทวนและเสริมความรู้/ทักษะเดิม เพิ่มความซับซ้อนหรือฝึกใช้ในบริบทใหม่','ประยุกต์ใช้ เปรียบเทียบ วิเคราะห์ขั้นต้น หรือฝึกปฏิบัติซ้ำอย่างมีเหตุผล'],
+      ['P — Proficient','ปฏิบัติ/แสดงสมรรถนะตาม PLO ได้อย่างมีประสิทธิภาพและค่อนข้างเป็นอิสระ','วิเคราะห์ ประยุกต์ ตัดสินใจ ออกแบบ แก้ปัญหาในสถานการณ์ใกล้เคียงงานจริง'],
+      ['M — Mastery','แสดงสมรรถนะขั้นสูง บูรณาการความรู้และทักษะหลายด้านเพื่อแก้ปัญหาซับซ้อน','บูรณาการ วิเคราะห์เชิงลึก ประเมินทางเลือก สร้างแนวทางแก้ปัญหา']
+    ],
+    plos:[
+      {no:'PLO 1',tqf:'ด้านจริยธรรม',desc:'PLO 1 ยึดหลักจริยธรรมของนักวิทยาศาสตร์ และจรรยาบรรณแห่งวิชาชีพ โดยไม่คัดลอกผลงานทางวิชาการและรายงานผลการปฏิบัติงานด้านวิชาชีพตามความเป็นจริง',th:70},
+      {no:'PLO 2',tqf:'ด้านความรู้',desc:'PLO 2 ประยุกต์ความรู้ทางจุลชีววิทยาในระบบการผลิตของอุตสาหกรรมอาหาร หรืออุตสาหกรรมที่เกี่ยวข้องและสนับสนุนกับอุตสาหกรรมอาหาร เพื่อการผลิตและพัฒนาผลิตภัณฑ์ โดยยึดหลักความปลอดภัยทางชีวภาพและจุลชีววิทยา',th:50},
+      {no:'PLO 3',tqf:'ด้านทักษะ',desc:'PLO 3 ค้นคว้าองค์ความรู้หรือนวัตกรรมจากแหล่งข้อมูลที่เชื่อถือได้ทุกครั้งเมื่อมีการวิเคราะห์จุลินทรีย์และพัฒนาผลิตภัณฑ์ในอุตสาหกรรมอาหาร',th:70},
+      {no:'PLO 4',tqf:'ด้านคุณลักษณะ',desc:'PLO 4 ใช้กระบวนการคิดอย่างเป็นระบบในการตัดสินใจและแก้ไขปัญหาในการปฏิบัติงานทางด้านจุลชีววิทยา',th:70},
+      {no:'PLO 5',tqf:'ด้านคุณลักษณะ',desc:'PLO 5 แสดงบุคลิกภาพของการมีทัศนคติและแนวคิดแบบยืดหยุ่น เป็นผู้นำและผู้ตามที่ดีในสถานการณ์ที่ต้องปฏิบัติงานร่วมกับผู้อื่น',th:70},
+      {no:'PLO 6',tqf:'ด้านจริยธรรม',desc:'PLO 6 วิเคราะห์ข้อมูลหรือชุดข้อมูลได้ด้วยการใช้ทักษะดิจิทัลและโปรแกรมวิเคราะห์ทางด้านชีวสารสนเทศ',th:70},
+      {no:'PLO 7',tqf:'ด้านทักษะ',desc:'PLO 7 วิเคราะห์จุลินทรีย์ในห่วงโซ่คุณค่าของอุตสาหกรรมอาหารได้ด้วยวิธีมาตรฐานสากล',th:70}
+    ]
+  }
+};
+function applyCurriculumCfg(cur){
+  const C=CURRICULA[cur]||CURRICULA['64'];
+  CFG.curmap=C.curmap.slice();
+  CFG.plos=C.plos.map(p=>({...p}));
+}
+// อนุมานหลักสูตรจากข้อมูลเก่า (ไฟล์ที่ไม่มี state.curriculum)
+function inferCurriculum(st){
+  try{
+    const cm=(st.clos||[]).map(c=>c.curmap).filter(Boolean);
+    if(cm.some(v=>['I','R','P','M'].includes(v)))return '69';
+    if(cm.some(v=>['▪️','▫️'].includes(v)))return '64';
+    const tqf=(st.clos||[]).map(c=>ploByNo(c.plo)).filter(Boolean);
+  }catch(e){}
+  return null;
+}
+function setCurriculum(cur,rerender){
+  if(cur!=='64'&&cur!=='69')cur='64';
+  state.curriculum=cur;
+  applyCurriculumCfg(cur);
+  // ปุ่มสลับ
+  const b64=$('cur64'),b69=$('cur69');
+  if(b64&&b69){b64.checked=(cur==='64');b69.checked=(cur==='69');}
+  // หัวคอลัมน์ Cur.Map
+  const C=CURRICULA[cur];
+  const hd=$('curmap-hd'); if(hd){hd.innerHTML='Cur.Map<br>'+C.hdrSub; hd.title=C.hdrTip;}
+  // การ์ดความหมายในคู่มือ
+  const card=$('curmap-card');
+  if(card){
+    card.innerHTML='<h2>'+esc(C.cardTitle)+'</h2><p class="sub">'+esc(C.cardSub)+'</p>'+
+      '<div class="tbl-scroll"><table><thead><tr>'+C.cardHead.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr></thead><tbody>'+
+      C.cardRows.map(r=>'<tr><td><b>'+esc(r[0])+'</b></td><td>'+esc(r[1])+'</td><td>'+esc(r[2])+'</td></tr>').join('')+
+      '</tbody></table></div>';
+  }
+  if(rerender){ renderCLO(); if(document.getElementById('p-set')&&$('p-set').classList.contains('active'))renderPLO(); }
+}
 const GRADE = {
   F50:[[79.5,'A'],[74.5,'B+'],[69.5,'B'],[64.5,'C+'],[59.5,'C'],[54.5,'D+'],[49.5,'D'],[-Infinity,'F']],
   F40:[[79.5,'A'],[74.5,'B+'],[69.5,'B'],[59.5,'C+'],[49.5,'C'],[44.5,'D+'],[39.5,'D'],[-Infinity,'F']]
@@ -542,7 +617,7 @@ function blankCLO(){return{plo:'',curmap:'',cloNo:'',detail:'',align:'',bloomDom
 function blankStudent(){return{id:'',name:'',scores:{}}}   // scores keyed by clo row id
 function blankPostRow(){return{gap:'',prev:'',next:''}}
 let state = {
-  scheme:'F50',
+  scheme:'F50', curriculum:'64',
   meta:{term:'ภาคต้น',year:2569,code:'',name:'',credits:''},
   desc:'',
   objectives:Array(9).fill(''),
@@ -564,7 +639,11 @@ let cloSeq=0; state.clos.forEach(c=>c._id=cloSeq++);
    ========================================================= */
 const $=id=>document.getElementById(id);
 function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(()=>t.classList.remove('show'),2200)}
-function opt(arr,sel){return ['<option value=""></option>'].concat(arr.map(v=>`<option ${String(v)===String(sel)?'selected':''}>${v}</option>`)).join('')}
+function opt(arr,sel){
+  const a=arr.slice();
+  if(sel!=null&&String(sel)!==''&&!a.map(String).includes(String(sel)))a.push(sel); // เก็บค่าที่เคยเลือกไว้แม้ไม่อยู่ในชุดปัจจุบัน
+  return ['<option value=""></option>'].concat(a.map(v=>`<option ${String(v)===String(sel)?'selected':''}>${v}</option>`)).join('');
+}
 function ploByNo(no){return CFG.plos.find(p=>p.no===no)}
 function activeCLOs(){ // CLOs that have any meaningful content -> become evaluation columns
   return state.clos.filter(c=>(c.cloNo&&c.cloNo.trim())||(c.detail&&c.detail.trim())||(c.weight!==''&&c.weight!=null));
@@ -597,6 +676,10 @@ function setScheme(s){state.scheme=s;
   $('eval-scheme').textContent='F < '+(s==='F50'?'50':'40');
   $('post-scheme').textContent='F < '+(s==='F50'?'50':'40');
   if($('p-eval').classList.contains('active'))renderEval();
+}
+function askSetCurriculum(cur){
+  setCurriculum(cur,true);
+  toast('สลับเป็นหลักสูตร '+cur+' แล้ว — ข้อมูลที่กรอกไว้ยังอยู่ครบ');
 }
 function gradeOf(total){
   if(total==null) return '–';
@@ -1066,7 +1149,7 @@ function exportAlSummary(){
 }
 
 function freshState(){return {
-  scheme:'F50',
+  scheme:'F50', curriculum:'64',
   meta:{term:'ภาคต้น',year:2569,code:'',name:'',credits:''},
   desc:'', objectives:Array(9).fill(''), objCover:'', cloAlign:'',
   clos:[blankCLO(),blankCLO(),blankCLO()],
@@ -1087,7 +1170,10 @@ function updateCourseTag(){
 }
 function applyState(ns,nplos){
   state=ns;
-  if(nplos)CFG.plos=nplos;
+  const cur=ns.curriculum||inferCurriculum(ns)||'64';
+  setCurriculum(cur,false);            // ตั้ง Cur.Map/PLO/หัวคอลัมน์/การ์ด ให้ตรงหลักสูตรของไฟล์
+  state.curriculum=cur;
+  if(nplos)CFG.plos=nplos;             // ถ้าไฟล์เคยแก้รายการ PLO เอง ให้ใช้ของไฟล์
   if(!state.post)state.post={note:'',acts:{},rows:{}};
   if(!state.post.acts)state.post.acts={};
   if(!state.post.rows)state.post.rows={};
@@ -1121,7 +1207,9 @@ function loadProject(e){
 }
 function newCourse(fromModal){
   if(!confirm('เริ่มรายวิชาใหม่? ข้อมูลที่ยังไม่บันทึกลงคลังหรือไฟล์จะหายไป'))return;
-  applyState(freshState());
+  const keep=state.curriculum||'64';
+  const s=freshState(); s.curriculum=keep;
+  applyState(s);
   if(fromModal)closeLibrary();
   go('p-pre');toast('เริ่มรายวิชาใหม่');
 }
@@ -1201,16 +1289,16 @@ function loadExample(){
   const C=(plo,cm,cloNo,detail,dom,lvl,strat,meth,tool,w,note)=>({plo,curmap:cm,cloNo,detail,align:'สอดคล้อง',bloomDomain:dom,bloomLevel:lvl,strategy:strat,method:meth,tool,weight:w,note:note||''});
   const COG='พุทธพิสัย (Cognitive domain)',AFF='จิตพิสัย (Affective domain)';
   s.clos=[
-    C('PLO 1','P','1.1','แสดงออกถึงความมีวินัย เคารพระเบียบข้อบังคับ',AFF,'Responding','ปลูกฝังให้ตระหนักถึงวินัย','ตรวจสอบการเข้าชั้นเรียนและการตรงต่อเวลา','ใบบันทึกการเข้าเรียน',1),
-    C('PLO 1','P','1.2','รายงานผลการทดลองและการจำแนกแบคทีเรียอย่างซื่อสัตย์',AFF,'Receiving','ตรวจสอบใบงานส่วนผลการทดลอง','ประเมินความถูกต้องและความน่าเชื่อถือ','ใบบันทึกพฤติกรรมการปฏิบัติงาน',1),
-    C('PLO 2','P','2','เข้าใจหลักการจัดจำแนกแบคทีเรียด้วยวิธีดั้งเดิม',COG,'Remember','บรรยาย/ถาม-ตอบ/อภิปรายกลุ่ม','สอบประเมินผล (กลางภาคและปลายภาค)','ข้อสอบ',66),
-    C('PLO 3','P','3','วิเคราะห์และสังเคราะห์ข้อมูลจากแหล่งข้อมูลที่เชื่อถือได้',COG,'Analyze','บรรยายและให้ศึกษาค้นคว้าด้วยตนเอง','งานมอบหมายกลุ่มสร้าง Infographic','การนำเสนอผ่าน infographic',3),
-    C('PLO 4','P','4','แสดงกระบวนการคิดอย่างเป็นระบบในการวางแผนการจำแนก',COG,'Understand','อธิบายหลักการและวิธีปฏิบัติ','ทักษะการปฏิบัติงาน','ใบบันทึกทักษะการปฏิบัติงาน',9.75),
-    C('PLO 5','R','5','แสดงออกถึงความร่วมมือและการทำงานเป็นทีม',AFF,'Responding','ส่งเสริมทัศนคติแบบยืดหยุ่น','งานมอบหมายกลุ่ม (ประเมินร่วมกับ 3)','การนำเสนอผ่าน infographic',0,'ไม่ประเมินเกรด (ประเมินเฉพาะการบรรลุ)'),
-    C('PLO 6','R','6.1','วิเคราะห์และอภิปรายผลการทดลองอย่างชัดเจน',COG,'Analyze','ออกแบบใบงานสรุปผลการทดลอง','ใบงานส่วนอภิปรายผลการทดลอง','ใบบันทึกทักษะการปฏิบัติงาน',3.25),
-    C('PLO 6','R','6.2','ค้นคว้าและวิเคราะห์ข้อมูลเพื่อการจำแนก',COG,'Analyze','แนะนำและมอบหมายงาน','งานมอบหมายกลุ่ม','การนำเสนอผ่าน infographic',2),
-    C('PLO 7','P','7.1','จำแนกแบคทีเรียด้วยวิธีปฏิบัติมาตรฐาน (การเข้าปฏิบัติการ)',AFF,'Responding','ตั้งกฎเกณฑ์การเข้าชั้นเรียนปฏิบัติการ','การเข้าชั้นเรียนวิชาปฏิบัติการ','ใบบันทึกการเข้ารับการฝึกปฏิบัติ',1),
-    C('PLO 7','P','7.2','จำแนกแบคทีเรียด้วยวิธีปฏิบัติมาตรฐาน (สอบ Spot test)',COG,'Understand','อธิบาย/สาธิต/ฝึกปฏิบัติ','การสอบ Spot test','ข้อสอบ Spot test',13)
+    C('PLO 1','▪️','1.1','แสดงออกถึงความมีวินัย เคารพระเบียบข้อบังคับ',AFF,'Responding','ปลูกฝังให้ตระหนักถึงวินัย','ตรวจสอบการเข้าชั้นเรียนและการตรงต่อเวลา','ใบบันทึกการเข้าเรียน',1),
+    C('PLO 1','▪️','1.2','รายงานผลการทดลองและการจำแนกแบคทีเรียอย่างซื่อสัตย์',AFF,'Receiving','ตรวจสอบใบงานส่วนผลการทดลอง','ประเมินความถูกต้องและความน่าเชื่อถือ','ใบบันทึกพฤติกรรมการปฏิบัติงาน',1),
+    C('PLO 2','▪️','2','เข้าใจหลักการจัดจำแนกแบคทีเรียด้วยวิธีดั้งเดิม',COG,'Remember','บรรยาย/ถาม-ตอบ/อภิปรายกลุ่ม','สอบประเมินผล (กลางภาคและปลายภาค)','ข้อสอบ',66),
+    C('PLO 3','▪️','3','วิเคราะห์และสังเคราะห์ข้อมูลจากแหล่งข้อมูลที่เชื่อถือได้',COG,'Analyze','บรรยายและให้ศึกษาค้นคว้าด้วยตนเอง','งานมอบหมายกลุ่มสร้าง Infographic','การนำเสนอผ่าน infographic',3),
+    C('PLO 4','▪️','4','แสดงกระบวนการคิดอย่างเป็นระบบในการวางแผนการจำแนก',COG,'Understand','อธิบายหลักการและวิธีปฏิบัติ','ทักษะการปฏิบัติงาน','ใบบันทึกทักษะการปฏิบัติงาน',9.75),
+    C('PLO 5','▫️','5','แสดงออกถึงความร่วมมือและการทำงานเป็นทีม',AFF,'Responding','ส่งเสริมทัศนคติแบบยืดหยุ่น','งานมอบหมายกลุ่ม (ประเมินร่วมกับ 3)','การนำเสนอผ่าน infographic',0,'ไม่ประเมินเกรด (ประเมินเฉพาะการบรรลุ)'),
+    C('PLO 6','▫️','6.1','วิเคราะห์และอภิปรายผลการทดลองอย่างชัดเจน',COG,'Analyze','ออกแบบใบงานสรุปผลการทดลอง','ใบงานส่วนอภิปรายผลการทดลอง','ใบบันทึกทักษะการปฏิบัติงาน',3.25),
+    C('PLO 6','▫️','6.2','ค้นคว้าและวิเคราะห์ข้อมูลเพื่อการจำแนก',COG,'Analyze','แนะนำและมอบหมายงาน','งานมอบหมายกลุ่ม','การนำเสนอผ่าน infographic',2),
+    C('PLO 7','▪️','7.1','จำแนกแบคทีเรียด้วยวิธีปฏิบัติมาตรฐาน (การเข้าปฏิบัติการ)',AFF,'Responding','ตั้งกฎเกณฑ์การเข้าชั้นเรียนปฏิบัติการ','การเข้าชั้นเรียนวิชาปฏิบัติการ','ใบบันทึกการเข้ารับการฝึกปฏิบัติ',1),
+    C('PLO 7','▪️','7.2','จำแนกแบคทีเรียด้วยวิธีปฏิบัติมาตรฐาน (สอบ Spot test)',COG,'Understand','อธิบาย/สาธิต/ฝึกปฏิบัติ','การสอบ Spot test','ข้อสอบ Spot test',13)
   ];
   s.gradeCrit={'A':'80 - 100','B+':'75 – 79','B':'70 – 74','C+':'60 – 69','C':'50 – 59','D+':'45 – 49','D':'40 – 44','F':'<40'};
   s.post.acts['Active Learning']={has:'มี',detail:'งานมอบหมายให้ถ่ายทอดความรู้เกี่ยวกับแบคทีเรียออกมาเป็น infographic ภายในกระดาษแผ่นเดียว',method:'ประเมินจากคะแนนงานมอบหมายโดยอาจารย์ที่รับผิดชอบ',problem:'-',improve:'-'};
@@ -1330,6 +1418,7 @@ function renderRefTables(){
   if(lll)lll.innerHTML=CFG.lllSkills.map(row).join('');
 }
 buildTabs();
+setCurriculum(state.curriculum||'64',false);
 buildHeaderFields();
 renderCLO();
 updateCourseTag();
