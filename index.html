@@ -109,6 +109,15 @@
     padding:12px 20px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:.3s;z-index:100;box-shadow:var(--shadow)}
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
   .post-act{display:grid;grid-template-columns:200px 90px 1fr;gap:10px;align-items:start;padding:12px 0;border-bottom:1px dashed var(--line)}
+  .act-extra{grid-column:1 / -1;margin:6px 0 2px;padding:12px 14px;background:var(--gold-l);border:1px solid #e6d3a3;border-radius:8px}
+  .act-extra .ex-lbl{font-size:12.5px;font-weight:700;color:#6a4e10;margin-bottom:8px}
+  .chk-grid{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}
+  .chk{flex:1 1 210px;min-width:0;position:relative;background:#fff;border:1px solid var(--line);border-radius:8px;
+    padding:8px 12px 8px 34px;font-size:12.5px;line-height:1.4;cursor:help;transition:.12s;
+    overflow-wrap:break-word;word-break:break-word}
+  .chk:hover{border-color:var(--gold);background:#fffdf6}
+  .chk input{position:absolute;left:11px;top:9px;margin:0;cursor:pointer}
+  .ex-ev{width:100%;padding:8px 10px;border:1px solid var(--line);border-radius:6px;font-family:inherit;font-size:13px;background:#fff}
   .post-act .lbl{font-weight:600;color:var(--ink-soft);font-size:13.5px;padding-top:8px}
   @media(max-width:860px){.g2,.g3,.g4{grid-template-columns:1fr}.post-act{grid-template-columns:1fr}}
   footer{text-align:center;color:#9aa6b1;font-size:12px;padding:20px}
@@ -134,6 +143,9 @@
   .lib-btn.load{background:var(--teal);color:#fff;border-color:var(--teal)}
   .lib-btn.del{color:var(--bad)}
   .lib-empty{padding:24px;text-align:center;color:#8a97a4;font-size:13.5px}
+  .sbar{position:relative;height:24px;background:var(--grey-input);border-radius:5px;overflow:hidden}
+  .sbar .sfill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--teal),#2a8f94);border-radius:5px;min-width:2px}
+  .sbar span{position:absolute;left:8px;top:0;line-height:24px;font-size:12px;color:var(--ink);font-weight:600;text-shadow:0 0 3px #fff,0 0 3px #fff}
   /* Evaluation data grid: scroll inside, freeze header + identity columns */
   #evalwrap{max-height:72vh;overflow:auto}
   #evaltable{border-collapse:separate;border-spacing:0;border-left:1px solid var(--line);border-top:1px solid var(--line)}
@@ -256,6 +268,23 @@
             <tr><td><b>P — Proficient</b></td><td>ปฏิบัติ/แสดงสมรรถนะตาม PLO ได้อย่างมีประสิทธิภาพและค่อนข้างเป็นอิสระ</td><td>วิเคราะห์ ประยุกต์ ตัดสินใจ ออกแบบ แก้ปัญหาในสถานการณ์ใกล้เคียงงานจริง</td></tr>
             <tr><td><b>M — Mastery</b></td><td>แสดงสมรรถนะขั้นสูง บูรณาการความรู้และทักษะหลายด้านเพื่อแก้ปัญหาซับซ้อน</td><td>บูรณาการ วิเคราะห์เชิงลึก ประเมินทางเลือก สร้างแนวทางแก้ปัญหา</td></tr>
           </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>ความหมาย: วิธี Active Learning และทักษะ Life-long Learning <span class="aun">AUN 3.2 · 3.3</span></h2>
+      <p class="sub">ใช้ประกอบการเลือกในแท็บ PostSemester (ส่วนกิจกรรม Active Learning และ LifeLong Learning)</p>
+      <div class="tbl-scroll">
+        <table>
+          <thead><tr><th style="width:190px">วิธี Active Learning</th><th>ความหมาย</th><th style="width:260px">ตัวอย่าง</th><th style="width:210px">หลักฐานที่เก็บได้</th></tr></thead>
+          <tbody id="al-ref"></tbody>
+        </table>
+      </div>
+      <div class="tbl-scroll" style="margin-top:14px">
+        <table>
+          <thead><tr><th style="width:190px">ทักษะ Life-long Learning</th><th>ความหมาย</th><th style="width:260px">ตัวอย่าง</th><th style="width:210px">หลักฐานที่เก็บได้</th></tr></thead>
+          <tbody id="lll-ref"></tbody>
         </table>
       </div>
     </div>
@@ -435,6 +464,7 @@
     <div class="lib-actions" style="margin-bottom:10px">
       <button class="lib-btn" onclick="renderInbox()">🔄 รีเฟรช</button>
       <button class="lib-btn" onclick="openInboxTab()">↗ เปิดรายการในแท็บใหม่</button>
+      <button class="lib-btn" style="background:var(--gold);color:#3a2a06;border-color:var(--gold)" onclick="openAlSummary()">📊 สรุปวิธี AL/LLL</button>
     </div>
     <div id="inboxwrap"><div class="lib-empty">กำลังโหลด…</div></div>
   </div>
@@ -450,7 +480,7 @@
    ตัวอย่าง: const CENTRAL_URL = 'https://script.google.com/macros/s/AKfy....../exec';
    ถ้าเว้นว่างไว้ ปุ่ม "ส่งเข้าระบบกลาง" จะถาม URL ครั้งแรกแล้วจำไว้ในเครื่อง
    ========================================================= */
-let CENTRAL_URL = 'https://script.google.com/a/macros/go.buu.ac.th/s/AKfycbx2QypOUqQUadvSUqwl589h5UCZibuN8z-_hhRNEWu-NAGaJUHxNgAUl5DKMYNlD1p-uA/exec';
+let CENTRAL_URL = '';
 
 /* =========================================================
    CONFIG (DropdownList equivalents) — editable in Settings
@@ -475,6 +505,28 @@ const CFG = {
     {no:'PLO 5',tqf:'ด้านคุณลักษณะ',desc:'PLO 5 แสดงบุคลิกภาพของการมีทัศนคติและแนวคิดแบบยืดหยุ่น เป็นผู้นำและผู้ตามที่ดีในสถานการณ์ที่ต้องปฏิบัติงานร่วมกับผู้อื่น',th:70},
     {no:'PLO 6',tqf:'ด้านจริยธรรม',desc:'PLO 6 วิเคราะห์ข้อมูลหรือชุดข้อมูลได้ด้วยการใช้ทักษะดิจิทัลและโปรแกรมวิเคราะห์ทางด้านชีวสารสนเทศ',th:70},
     {no:'PLO 7',tqf:'ด้านทักษะ',desc:'PLO 7 วิเคราะห์จุลินทรีย์ในห่วงโซ่คุณค่าของอุตสาหกรรมอาหารได้ด้วยวิธีมาตรฐานสากล',th:70}
+  ],
+  alMethods:[
+    {name:'Interactive lecture',meaning:'บรรยายแบบมีปฏิสัมพันธ์ ให้ผู้เรียนมีส่วนร่วมระหว่างบรรยาย',example:'ตั้งคำถามระหว่างบรรยาย / ให้ตอบสั้น ๆ',evidence:'บันทึกการมีส่วนร่วม / แบบสอบถาม'},
+    {name:'Case-based learning',meaning:'เรียนรู้จากกรณีศึกษา แล้ววิเคราะห์เหตุและผล',example:'กรณีอาหารปนเปื้อน จุลินทรีย์เสีย หรือผลิตภัณฑ์หมักมีปัญหา',evidence:'ใบงาน / คำตอบ / คะแนน rubric'},
+    {name:'Problem-based learning',meaning:'เริ่มจากปัญหาปลายเปิด ให้นิสิตหาสาเหตุและแนวทางแก้',example:'กระบวนการหมักไม่สมบูรณ์ จุลินทรีย์เกินมาตรฐาน',evidence:'รายงานวิเคราะห์ปัญหา / ข้อเสนอแนวทางแก้'},
+    {name:'Scenario-based learning',meaning:'ใช้สถานการณ์จำลองให้นิสิตตัดสินใจภายใต้เงื่อนไข',example:'ให้สถานการณ์ 10 นาที แล้วซักถามแบบไม่ทราบคำถามล่วงหน้า',evidence:'คำตอบกลุ่ม / แบบประเมินการให้เหตุผล'},
+    {name:'Small group activity',meaning:'ทำภารกิจกลุ่มย่อยจนเกิดคำตอบหรือผลงาน',example:'ออกแบบแนวทางควบคุมจุลินทรีย์ / วิเคราะห์ผลทดลอง',evidence:'worksheet / group output'},
+    {name:'Group discussion',meaning:'อภิปรายแลกเปลี่ยนความคิดเห็นในกลุ่ม',example:'อภิปรายสาเหตุการปนเปื้อนหรือ spoilage',evidence:'สรุปอภิปราย / participation record'},
+    {name:'Journal/Paper discussion',meaning:'อ่านและอภิปรายบทความวิชาการ',example:'วิเคราะห์ paper เกี่ยวกับ probiotic, fermentation, pathogen control',evidence:'paper summary'},
+    {name:'Mini project/ Project-based',meaning:'ทำโครงงานขนาดเล็กต่อเนื่องจนเกิดชิ้นงาน',example:'ผลิตภัณฑ์หมักจากวัตถุดิบท้องถิ่น หรือการออกแบบแนวคิดผลิตภัณฑ์',evidence:'proposal / report / product / presentation'},
+    {name:'Laboratory/ Practice-based',meaning:'เรียนรู้จากการฝึกปฏิบัติจริง',example:'aseptic technique, dilution, plate count, microbial isolation',evidence:'lab report / practical score'},
+    {name:'Presentation/ VDO',meaning:'นำเสนอความรู้หรือผลงานผ่านการพูดหรือสื่อดิจิทัล',example:'clip VDO ภาษาอังกฤษเล่าเรื่องผลิตภัณฑ์หมัก',evidence:'presentation rubric / VDO file'},
+    {name:'Reflection/ Self-directed',meaning:'ทบทวนสิ่งที่เรียนรู้และกำหนดสิ่งที่ควรพัฒนาต่อ',example:'reflection หลัง mini project หรือหลังตอบ case',evidence:'reflection form / learning log'}
+  ],
+  lllSkills:[
+    {name:'ตั้งคำถาม / ระบุปัญหา',meaning:'มองเห็นประเด็นที่ต้องเรียนรู้เพิ่มเติม',example:'ตั้งคำถามจากผลทดลองหรือสถานการณ์ทางจุลชีววิทยา',evidence:'worksheet / question log'},
+    {name:'สืบค้นข้อมูลเชื่อถือได้',meaning:'ค้นข้อมูลจาก textbook, journal, database หรือมาตรฐาน',example:'ค้น paper หรือมาตรฐานที่เกี่ยวข้องกับจุลินทรีย์',evidence:'reference list / search record'},
+    {name:'ประเมินแหล่งข้อมูล',meaning:'พิจารณาความน่าเชื่อถือก่อนนำข้อมูลมาใช้',example:'เปรียบเทียบแหล่งข้อมูลวิชาการกับแหล่งข้อมูลทั่วไป',evidence:'source evaluation rubric'},
+    {name:'วิเคราะห์ / แปลผลข้อมูล',meaning:'ใช้ข้อมูลในการอธิบายหรือสรุปผลอย่างมีเหตุผล',example:'แปลผล CFU, growth curve, quality data',evidence:'worksheet / data analysis report'},
+    {name:'ประยุกต์ความรู้กับสถานการณ์ใหม่',meaning:'นำความรู้ไปใช้กับโจทย์หรือบริบทใหม่',example:'เลือกแนวทางควบคุมจุลินทรีย์ในผลิตภัณฑ์ใหม่',evidence:'case report / mini project'},
+    {name:'สื่อสารองค์ความรู้',meaning:'ถ่ายทอดความรู้ให้เข้าใจง่ายและเหมาะกับผู้ฟัง',example:'presentation, infographic, VDO storytelling',evidence:'presentation / VDO rubric'},
+    {name:'สะท้อนและพัฒนาตนเอง',meaning:'ประเมินการเรียนรู้ของตนและวางแผนพัฒนาต่อ',example:'reflection หลังงานกลุ่มหรือโครงงาน',evidence:'reflection'}
   ]
 };
 const GRADE = {
@@ -778,6 +830,25 @@ function postStats(){ // recompute per active CLO
     return {c,mean,mn,mx,pct,full,th,result};
   });
 }
+function actExtra(k,a){
+  let kind=null;
+  if(k==='Active Learning')kind='al'; else if(k==='LifeLong Learning')kind='lll';
+  if(!kind)return '';
+  const list=kind==='al'?CFG.alMethods:CFG.lllSkills;
+  const sel=a.methods||{};
+  const label=kind==='al'?'เลือกวิธี Active Learning ที่ใช้จริง (เลื่อนเมาส์เพื่อดูความหมาย/ตัวอย่าง/หลักฐาน)'
+                         :'เลือกทักษะ Life-long Learning ที่พัฒนา (เลื่อนเมาส์เพื่อดูความหมาย/ตัวอย่าง/หลักฐาน)';
+  const chips=list.map((it,idx)=>{
+    const tip=esc(it.meaning+' — ตัวอย่าง: '+it.example+' — หลักฐาน: '+it.evidence);
+    const on=sel[it.name]?'checked':'';
+    return `<label class="chk" title="${tip}"><input type="checkbox" ${on} onchange="setActMethod('${k}','${kind}',${idx},this.checked)"><span>${esc(it.name)}</span></label>`;
+  }).join('');
+  return `<div class="act-extra">
+    <div class="ex-lbl">${label}</div>
+    <div class="chk-grid">${chips}</div>
+    <input class="ex-ev" placeholder="หลักฐานที่เก็บได้ (รวม)" value="${esc(a.evidence||'')}" oninput="state.post.acts['${k}'].evidence=this.value">
+  </div>`;
+}
 function renderPost(){
   setScheme(state.scheme);
   // activities
@@ -791,7 +862,8 @@ function renderPost(){
         <input placeholder="วิธีการประเมิน คือ" value="${esc(a.method)}" oninput="state.post.acts['${k}'].method=this.value">
         <input placeholder="ปัญหาที่พบ (ถ้ามี)" value="${esc(a.problem)}" oninput="state.post.acts['${k}'].problem=this.value">
         <input placeholder="แนวทางการปรับปรุง" value="${esc(a.improve)}" oninput="state.post.acts['${k}'].improve=this.value">
-      </div></div>`;
+      </div>
+      ${actExtra(k,a)}</div>`;
   }).join('');
   $('post_note').value=state.post.note;
   // CLO results
@@ -813,6 +885,13 @@ function renderPost(){
   }).join('') || '<tr><td colspan="13" class="empty-hint">ยังไม่มี CLO</td></tr>';
 }
 function setPost(id,k,v){(state.post.rows[id]||(state.post.rows[id]=blankPostRow()))[k]=v;}
+function setActMethod(actKey,kind,idx,checked){
+  const list=kind==='al'?CFG.alMethods:CFG.lllSkills;
+  const nm=list[idx].name;
+  const a=state.post.acts[actKey]; if(!a)return;
+  if(!a.methods)a.methods={};
+  if(checked)a.methods[nm]=true; else delete a.methods[nm];
+}
 
 /* =========================================================
    SETTINGS (PLO list)
@@ -920,6 +999,70 @@ async function loadFromCentral(i){
   }catch(err){
     toast('โหลดไม่สำเร็จ — ลองเปิดไฟล์จาก Drive แทน');
   }
+}
+
+/* ===== สรุปการใช้วิธี Active Learning / Life-long Learning (แอดมิน) ===== */
+async function openAlSummary(){
+  const url=getCentralUrl(false); if(!url){toast('ยังไม่ได้ตั้งค่า URL ระบบกลาง');return;}
+  if(!INBOX_CACHE.length){ await renderInbox(); }
+  if(!INBOX_CACHE.length){ toast('ยังไม่มีรายวิชาที่ส่งเข้ามา'); return; }
+  // เลือกเวอร์ชันล่าสุดต่อรหัสวิชา (INBOX_CACHE เรียงใหม่→เก่า)
+  const seen={}, latest=[];
+  INBOX_CACHE.forEach(r=>{ const key=((r.code||'').trim())||r.fileId; if(!seen[key]){seen[key]=1; latest.push(r);} });
+  $('inboxsub').textContent='กำลังรวบรวมข้อมูลจาก '+latest.length+' รายวิชา…';
+  $('inboxwrap').innerHTML='<div class="lib-empty">กำลังดึงข้อมูลรายวิชา ('+latest.length+' ไฟล์)…</div>';
+  const alCount={}, lllCount={};
+  CFG.alMethods.forEach(m=>alCount[m.name]=0);
+  CFG.lllSkills.forEach(m=>lllCount[m.name]=0);
+  let ok=0, alYes=0, lllYes=0, noData=0; const failed=[];
+  await Promise.all(latest.map(async r=>{
+    try{
+      const res=await jsonp(url,{action:'get',fileId:r.fileId});
+      if(!res||!res.ok)throw 0;
+      const o=JSON.parse(res.payload);
+      const acts=(o.state&&o.state.post&&o.state.post.acts)||{};
+      const al=acts['Active Learning']||{}, lll=acts['LifeLong Learning']||{};
+      if(al.has==='มี')alYes++; if(lll.has==='มี')lllYes++;
+      let any=false;
+      Object.keys(al.methods||{}).forEach(n=>{alCount[n]=(alCount[n]||0)+1;any=true;});
+      Object.keys(lll.methods||{}).forEach(n=>{lllCount[n]=(lllCount[n]||0)+1;any=true;});
+      if(!any)noData++;
+      ok++;
+    }catch(e){ failed.push(r.code||r.fileName||r.fileId); }
+  }));
+  renderAlSummary(ok,alCount,lllCount,{alYes,lllYes,noData,failed});
+}
+function sbar(c,total){const pct=total?Math.round(c/total*100):0;
+  return `<div class="sbar"><div class="sfill" style="width:${pct}%"></div><span>${c} วิชา (${pct}%)</span></div>`;}
+function sumTable(title,counts,order,total){
+  const rows=order.map(nm=>`<tr><td>${esc(nm)}</td><td style="width:280px">${sbar(counts[nm]||0,total)}</td></tr>`).join('');
+  return `<h3 style="margin:14px 0 6px;color:var(--teal-d)">${title}</h3>
+    <div class="tbl-scroll"><table><thead><tr><th>รายการ</th><th>จำนวนรายวิชาที่ใช้</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+}
+function renderAlSummary(ok,alCount,lllCount,x){
+  const url=getCentralUrl(false);
+  $('inboxsub').innerHTML='สรุปจาก <b>'+ok+'</b> รายวิชา (นับเวอร์ชันล่าสุดต่อรหัสวิชา) · ระบุมีกิจกรรม Active Learning '+x.alYes+' วิชา · Life-long Learning '+x.lllYes+' วิชา'+(x.noData?' · ยังไม่ได้เลือกวิธี '+x.noData+' วิชา':'');
+  const alOrder=CFG.alMethods.map(m=>m.name), lllOrder=CFG.lllSkills.map(m=>m.name);
+  let h='<div class="lib-actions" style="margin-bottom:6px"><button class="lib-btn load" onclick="renderInbox()">← กลับไปรายการ</button>'+
+        '<button class="lib-btn" onclick="exportAlSummary()">⬇ ดาวน์โหลดสรุป (CSV)</button></div>';
+  h+=sumTable('วิธี Active Learning',alCount,alOrder,ok);
+  h+=sumTable('ทักษะ Life-long Learning',lllCount,lllOrder,ok);
+  if(x.failed&&x.failed.length)h+='<p class="sub" style="margin-top:8px;color:var(--bad)">ดึงไม่สำเร็จ '+x.failed.length+' ไฟล์: '+esc(x.failed.slice(0,6).join(', '))+(x.failed.length>6?' …':'')+'</p>';
+  $('inboxwrap').innerHTML=h;
+  AL_SUMMARY={ok,alCount,lllCount,alOrder,lllOrder};
+}
+let AL_SUMMARY=null;
+function exportAlSummary(){
+  if(!AL_SUMMARY)return;
+  const S=AL_SUMMARY;
+  let rows=[['กลุ่ม','รายการ','จำนวนรายวิชา','จากทั้งหมด']];
+  S.alOrder.forEach(nm=>rows.push(['Active Learning',nm,S.alCount[nm]||0,S.ok]));
+  S.lllOrder.forEach(nm=>rows.push(['Life-long Learning',nm,S.lllCount[nm]||0,S.ok]));
+  const csv='\ufeff'+rows.map(r=>r.map(c=>'"'+String(c).replace(/"/g,'""')+'"').join(',')).join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='สรุปวิธี_AL_LLL.csv';a.click();
+  toast('ดาวน์โหลดสรุปแล้ว');
 }
 
 function freshState(){return {
@@ -1129,7 +1272,7 @@ function exportExcel(){
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ev),'ประเมิน F<'+(state.scheme==='F50'?'50':'40'));
   // PostSemester
   let ps=[['PostSemester (เกณฑ์ F < '+(state.scheme==='F50'?'50':'40')+')'],['รหัสวิชา',M.code,'ภาค',M.term,'ปี',M.year],[]];
-  Object.keys(state.post.acts).forEach(k=>{const a=state.post.acts[k];ps.push(['กิจกรรม '+k,a.has,'กิจกรรม:',a.detail,'วิธีประเมิน:',a.method,'ปัญหา:',a.problem,'แนวทาง:',a.improve]);});
+  Object.keys(state.post.acts).forEach(k=>{const a=state.post.acts[k];const m=Object.keys(a.methods||{}).join(', ');ps.push(['กิจกรรม '+k,a.has,'กิจกรรม:',a.detail,'วิธีประเมิน:',a.method,'ปัญหา:',a.problem,'แนวทาง:',a.improve,'วิธี/ทักษะที่เลือก:',m,'หลักฐาน:',a.evidence||'']);});
   ps.push(['หมายเหตุ:',state.post.note],[]);
   ps.push(['CLO No.','รายละเอียด CLO','PLO','สัดส่วน(%)','Min','Max','Mean','%ที่ได้รับ','เกณฑ์บรรลุ(%)','ผลเปรียบเทียบ','Gap/การตีความ','ข้อปรับปรุงจากปีก่อน','แนวทางครั้งต่อไป']);
   stats.forEach(s=>{const r=state.post.rows[s.c._id]||{};ps.push([s.c.cloNo,s.c.detail,s.c.plo,s.full,s.mn,s.mx,s.mean==null?'':+fmt(s.mean),s.pct==null?'':+fmt(s.pct,1),s.th,s.result,r.gap||'',r.prev||'',r.next||'']);});
@@ -1166,7 +1309,7 @@ function exportWord(){
   h+=tbl(['สถิติ',...cols.map(c=>'CLO '+c.cloNo)],[
     ['Mean',...stats.map(s=>fmt(s.mean))],['Min',...stats.map(s=>fmt(s.mn))],['Max',...stats.map(s=>fmt(s.mx))],['% ที่ได้รับ',...stats.map(s=>fmt(s.pct,1))]]);
   h+=`<h2>PostSemester (F &lt; ${sname})</h2>`;
-  Object.keys(state.post.acts).forEach(k=>{const a=state.post.acts[k];h+=`<p class=kv><b>กิจกรรม ${k}:</b> ${a.has||'-'} | ${a.detail||''} | ประเมิน: ${a.method||''} | ปัญหา: ${a.problem||''} | แนวทาง: ${a.improve||''}</p>`;});
+  Object.keys(state.post.acts).forEach(k=>{const a=state.post.acts[k];const m=Object.keys(a.methods||{}).join(', ');h+=`<p class=kv><b>กิจกรรม ${k}:</b> ${a.has||'-'} | ${a.detail||''} | ประเมิน: ${a.method||''} | ปัญหา: ${a.problem||''} | แนวทาง: ${a.improve||''}${m?' | วิธี/ทักษะ: '+m:''}${a.evidence?' | หลักฐาน: '+a.evidence:''}</p>`;});
   if(state.post.note)h+=`<p class=kv><b>หมายเหตุ:</b> ${state.post.note}</p>`;
   h+=tbl(['CLO','รายละเอียด','PLO','%เต็ม','Min','Max','Mean','%ที่ได้รับ','เกณฑ์(%)','ผล','Gap/การตีความ','ข้อปรับปรุงปีก่อน','แนวทางครั้งต่อไป'],
     stats.map(s=>{const r=state.post.rows[s.c._id]||{};return [s.c.cloNo,s.c.detail,s.c.plo,s.full,fmt(s.mn),fmt(s.mx),fmt(s.mean),fmt(s.pct,1),s.th,s.result,r.gap||'',r.prev||'',r.next||''];}));
@@ -1180,10 +1323,17 @@ function exportWord(){
 /* =========================================================
    INIT
    ========================================================= */
+function renderRefTables(){
+  const row=it=>`<tr><td><b>${esc(it.name)}</b></td><td>${esc(it.meaning)}</td><td>${esc(it.example)}</td><td>${esc(it.evidence)}</td></tr>`;
+  const al=$('al-ref'), lll=$('lll-ref');
+  if(al)al.innerHTML=CFG.alMethods.map(row).join('');
+  if(lll)lll.innerHTML=CFG.lllSkills.map(row).join('');
+}
 buildTabs();
 buildHeaderFields();
 renderCLO();
 updateCourseTag();
+renderRefTables();
 </script>
 </body>
 </html>
