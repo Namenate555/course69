@@ -954,8 +954,8 @@ function fileChips(k,a){
   const files=a.files||[];
   if(!files.length)return '<span class="file-none">ยังไม่มีไฟล์แนบ</span>';
   return files.map((f,i)=>`<span class="fchip">
-      <span class="fname" title="${esc(f.name)}" onclick="openActFile('${k}',${i})">📄 ${esc(f.name)}</span>
-      <span class="fsize">${fmtSize(f.size)}</span>
+      <span class="fname" title="${esc(f.name)}${f.url?' (อยู่บน Google Drive)':''}" onclick="openActFile('${k}',${i})">${f.url?'☁':'📄'} ${esc(f.name)}</span>
+      <span class="fsize">${f.size?fmtSize(f.size):''}</span>
       <button class="fdel" title="ลบไฟล์นี้" onclick="removeActFile('${k}',${i})">×</button>
     </span>`).join('');
 }
@@ -964,7 +964,7 @@ function refreshActFiles(k){
   const kid=k.replace(/[^A-Za-z]/g,'');
   const el=$('files-'+kid); if(el)el.innerHTML=fileChips(k,state.post.acts[k]);
 }
-const MAX_FILE=6*1024*1024; // 6 MB ต่อไฟล์
+const MAX_FILE=10*1024*1024; // 10 MB ต่อไฟล์
 function addActFiles(k,fileList){
   const a=state.post.acts[k]; if(!a)return; if(!a.files)a.files=[];
   const files=Array.from(fileList||[]);
@@ -980,7 +980,7 @@ function addActFiles(k,fileList){
   function done(){
     refreshActFiles(k);
     let msg='แนบไฟล์แล้ว';
-    if(skipped.length)msg='ข้ามไฟล์ที่ใหญ่เกิน 6 MB: '+skipped.join(', ');
+    if(skipped.length)msg='ข้ามไฟล์ที่ใหญ่เกิน 10 MB: '+skipped.join(', ');
     toast(msg);
   }
 }
@@ -992,6 +992,7 @@ function removeActFile(k,i){
 function openActFile(k,i){
   const a=state.post.acts[k]; if(!a||!a.files||!a.files[i])return;
   const f=a.files[i];
+  if(f.url){ window.open(f.url,'_blank'); return; }   // อัปโหลดขึ้น Google Drive แล้ว → เปิดลิงก์
   try{
     const parts=String(f.data).split(',');const bin=atob(parts[1]||'');const len=bin.length;
     const buf=new Uint8Array(len); for(let j=0;j<len;j++)buf[j]=bin.charCodeAt(j);
