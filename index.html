@@ -414,6 +414,16 @@
       <button class="addrow" onclick="addStudent()">+ เพิ่มนิสิต</button>
       <span style="margin-left:10px;font-size:12.5px;color:var(--ink-soft)">จำนวนนิสิต: <b id="stcount">0</b></span>
       <div id="grade-summary" style="margin-top:18px"></div>
+      <div class="card" id="ylo-export" style="margin-top:16px;background:#f4f8f8">
+        <h3 style="margin:0 0 4px;color:var(--teal-d)">ส่งออกสำหรับระบบ YLO <span class="aun">จับคู่ด้วยรหัสนิสิต</span></h3>
+        <p class="sub" style="margin:0 0 12px">นำคะแนนราย CLO และสรุป PLO ไปใส่ในไฟล์ YLO ได้เลย โดยไม่ต้องกรอกซ้ำ — จับคู่แถวด้วยรหัสนิสิต (รหัสที่ไม่มีในไฟล์ YLO จะไม่ถูกนำไปใส่)</p>
+        <div class="lib-actions">
+          <button class="hbtn gold" style="border:none" onclick="exportYLOExcel()">⬇ Excel (.xlsx) — คะแนน CLO + สรุป PLO</button>
+          <button class="lib-btn" onclick="copyYLO('clo')">📋 คัดลอกคะแนนราย CLO</button>
+          <button class="lib-btn" onclick="copyYLO('plo')">📋 คัดลอกสรุป PLO ต่อคน</button>
+        </div>
+        <p class="sub" style="margin:10px 0 0;font-size:12px">วิธีวางแบบจับรหัส: ในไฟล์ YLO ให้วางคะแนนโดยเทียบรหัสนิสิต (คอลัมน์รหัสนิสิต) เข้ากับบล็อกของรายวิชานี้ หรือใช้ VLOOKUP/XLOOKUP กับตารางที่คัดลอก/ไฟล์ Excel นี้ก็ได้</p>
+      </div>
     </div>
   </section>
 
@@ -936,6 +946,80 @@ function exportGradeSummary(){
   a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
   a.download='สรุปเกรด_'+(state.meta.code||'รายวิชา')+'.csv'; a.click();
   toast('ดาวน์โหลดสรุปเกรดแล้ว');
+}
+
+/* ===== ส่งออกสำหรับระบบ YLO (จับคู่ด้วยรหัสนิสิต) ===== */
+function ploNoOf(c){ const m=String(c.plo||'').match(/\d+/); return m?('PLO'+m[0]):''; }
+function yloData(){
+  const cols=evalCols();
+  const studs=state.students.map((st)=>st)
+    .filter(st=> (st.id&&st.id.trim()) || (st.name&&st.name.trim()) )
+    .sort((a,b)=> String(a.id||'').localeCompare(String(b.id||''),'th',{numeric:true}));
+  const ploSet=[...new Set(cols.map(ploNoOf).filter(Boolean))]
+    .sort((a,b)=> (+a.replace('PLO','')) - (+b.replace('PLO','')) );
+  const ploFull={}; ploSet.forEach(p=>ploFull[p]=0);
+  cols.forEach(c=>{const p=ploNoOf(c);const w=num(c.weight);if(p&&w!=null)ploFull[p]+=w;});
+  const rows=studs.map(st=>{
+    const clo=cols.map(c=>{const v=st.scores[c._id];return (v==null||v==='')?'':v;});
+    const tot=rowTotal(st,cols);
+    const plo={}; ploSet.forEach(p=>plo[p]={got:0,has:false});
+    cols.forEach(c=>{const p=ploNoOf(c);const v=num(st.scores[c._id]);if(p&&v!=null){plo[p].got+=v;plo[p].has=true;}});
+    const ploScore={}, ploPct={};
+    ploSet.forEach(p=>{ ploScore[p]=plo[p].has?plo[p].got:''; ploPct[p]=(plo[p].has&&ploFull[p])?(plo[p].got/ploFull[p]*100):''; });
+    return {id:st.id||'',name:st.name||'',group:st.group||'',clo,tot,grade:gradeOf(tot),ploScore,ploPct};
+  });
+  return {cols,ploSet,ploFull,rows};
+}
+function exportYLOExcel(){
+  const d=yloData();
+  if(!d.rows.length){toast('ยังไม่มีข้อมูลนิสิตให้ส่งออก');return;}
+  const M=state.meta;
+  const wb=XLSX.utils.book_new();
+  const a1=[
+    ['ไฟล์ต้นทาง', (M.code||'')+' '+(M.name||''), 'ภาค', M.term||'', 'ปี', M.year||'', 'เกณฑ์','F<'+(state.scheme==='F50'?'50':'40')],
+    ['','','รหัสนิสิต','ชื่อ-นามสกุล', ...d.cols.map(ploNoOf), 'รวมทั้งหมด','Grade'],
+    ['ลำดับ','กลุ่ม','','', ...d.cols.map(c=>'CLO'+c.cloNo), '',''],
+    ['คะแนนเต็ม','','','', ...d.cols.map(c=>c.weight), '','']
+  ];
+  d.rows.forEach((r,i)=>a1.push([i+1, r.group, r.id, r.name, ...r.clo, r.tot==null?'':+fmt(r.tot,2), r.grade]));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a1),'คะแนนราย CLO');
+  const a2=[['ลำดับ','รหัสนิสิต','ชื่อ-นามสกุล', ...d.ploSet.map(p=>p+' (คะแนน)'), ...d.ploSet.map(p=>p+' (%)'), 'รวม','Grade']];
+  d.rows.forEach((r,i)=>a2.push([i+1,r.id,r.name,
+    ...d.ploSet.map(p=>r.ploScore[p]===''?'':+fmt(r.ploScore[p],2)),
+    ...d.ploSet.map(p=>r.ploPct[p]===''?'':+fmt(r.ploPct[p],2)),
+    r.tot==null?'':+fmt(r.tot,2), r.grade]));
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a2),'สรุป PLO ต่อคน');
+  const a3=[['PLO','คะแนนเต็มรวมของ PLO','ค่าเฉลี่ย % ที่ได้รับ (ทั้งชั้น)','จำนวนนิสิตที่มีข้อมูล']];
+  d.ploSet.forEach(p=>{
+    const vals=d.rows.map(r=>r.ploPct[p]).filter(v=>v!=='');
+    const mean=vals.length?vals.reduce((a,b)=>a+b,0)/vals.length:'';
+    a3.push([p, d.ploFull[p], mean===''?'':+fmt(mean,2), vals.length]);
+  });
+  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(a3),'สรุป PLO รวม');
+  XLSX.writeFile(wb,'YLO_'+(M.code||'รายวิชา')+'.xlsx');
+  toast('ส่งออก Excel สำหรับ YLO แล้ว');
+}
+function copyToClipboard(text){
+  const ok=()=>toast('คัดลอกแล้ว — ไปวางในไฟล์ YLO ได้เลย');
+  const fb=t=>{const ta=document.createElement('textarea');ta.value=t;ta.style.position='fixed';ta.style.opacity='0';document.body.appendChild(ta);ta.select();try{document.execCommand('copy');ok();}catch(e){toast('คัดลอกไม่สำเร็จ ลองใช้ปุ่ม Excel แทน');}document.body.removeChild(ta);};
+  if(navigator.clipboard&&navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(ok,()=>fb(text));
+  else fb(text);
+}
+function copyYLO(mode){
+  const d=yloData();
+  if(!d.rows.length){toast('ยังไม่มีข้อมูลนิสิตให้คัดลอก');return;}
+  let lines=[];
+  if(mode==='clo'){
+    lines.push(['รหัสนิสิต','ชื่อ-นามสกุล', ...d.cols.map(c=>'CLO'+c.cloNo), 'รวมทั้งหมด','Grade'].join('\t'));
+    d.rows.forEach(r=>lines.push([r.id,r.name, ...r.clo, r.tot==null?'':fmt(r.tot,2), r.grade].join('\t')));
+  } else {
+    lines.push(['รหัสนิสิต','ชื่อ-นามสกุล', ...d.ploSet.map(p=>p), ...d.ploSet.map(p=>p+'%'), 'รวม','Grade'].join('\t'));
+    d.rows.forEach(r=>lines.push([r.id,r.name,
+      ...d.ploSet.map(p=>r.ploScore[p]===''?'':fmt(r.ploScore[p],2)),
+      ...d.ploSet.map(p=>r.ploPct[p]===''?'':fmt(r.ploPct[p],2)),
+      r.tot==null?'':fmt(r.tot,2), r.grade].join('\t')));
+  }
+  copyToClipboard(lines.join('\n'));
 }
 function onScore(si,cloId,v){                 // update one cell — no full re-render (keeps focus)
   state.students[si].scores[cloId]=v;
