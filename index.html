@@ -152,6 +152,16 @@
   .lib-btn.load{background:var(--teal);color:#fff;border-color:var(--teal)}
   .lib-btn.del{color:var(--bad)}
   .lib-empty{padding:24px;text-align:center;color:#8a97a4;font-size:13.5px}
+  .gbar-chart{display:flex;align-items:flex-end;gap:10px;height:150px;padding:6px 4px 0;margin-bottom:14px;border-bottom:2px solid var(--line)}
+  .gbar-col{flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;min-width:34px}
+  .gbar-n{font-size:13px;font-weight:800;color:var(--ink);margin-bottom:3px}
+  .gbar-wrap{width:100%;display:flex;align-items:flex-end;justify-content:center;height:100px}
+  .gbar{width:74%;max-width:40px;background:linear-gradient(180deg,#2a8f94,var(--teal));border-radius:5px 5px 0 0;min-height:2px}
+  .gbar.f{background:linear-gradient(180deg,#e06666,var(--bad))}
+  .gbar-g{font-size:14px;font-weight:800;color:var(--teal-d);margin-top:5px}
+  .gbar-p{font-size:11px;color:var(--ink-soft)}
+  .grade-stat{display:flex;flex-wrap:wrap;gap:8px 18px;font-size:13px;color:var(--ink)}
+  .grade-stat .ok{color:var(--good)} .grade-stat .bad{color:var(--bad)}
   .sbar{position:relative;height:24px;background:var(--grey-input);border-radius:5px;overflow:hidden}
   .sbar .sfill{position:absolute;left:0;top:0;bottom:0;background:linear-gradient(90deg,var(--teal),#2a8f94);border-radius:5px;min-width:2px}
   .sbar span{position:absolute;left:8px;top:0;line-height:24px;font-size:12px;color:var(--ink);font-weight:600;text-shadow:0 0 3px #fff,0 0 3px #fff}
@@ -403,6 +413,7 @@
       </div>
       <button class="addrow" onclick="addStudent()">+ เพิ่มนิสิต</button>
       <span style="margin-left:10px;font-size:12.5px;color:var(--ink-soft)">จำนวนนิสิต: <b id="stcount">0</b></span>
+      <div id="grade-summary" style="margin-top:18px"></div>
     </div>
   </section>
 
@@ -623,7 +634,7 @@ const GRADE_ORDER=['A','B+','B','C+','C','D+','D','F'];
    STATE
    ========================================================= */
 function blankCLO(){return{plo:'',curmap:'',cloNo:'',detail:'',align:'',bloomDomain:'',bloomLevel:'',strategy:'',method:'',tool:'',weight:'',note:''}}
-function blankStudent(){return{id:'',name:'',scores:{}}}   // scores keyed by clo row id
+function blankStudent(){return{id:'',name:'',group:'',scores:{}}}   // scores keyed by clo row id
 function blankPostRow(){return{gap:'',prev:'',next:''}}
 let state = {
   scheme:'F50', curriculum:'64',
@@ -681,10 +692,14 @@ function go(id){
 /* =========================================================
    SCHEME
    ========================================================= */
-function setScheme(s){state.scheme=s;
-  $('eval-scheme').textContent='F < '+(s==='F50'?'50':'40');
-  $('post-scheme').textContent='F < '+(s==='F50'?'50':'40');
-  if($('p-eval').classList.contains('active'))renderEval();
+function syncSchemeLabels(){
+  const t='F < '+(state.scheme==='F50'?'50':'40');
+  const a=$('eval-scheme'),b=$('post-scheme'); if(a)a.textContent=t; if(b)b.textContent=t;
+}
+function setScheme(s){
+  state.scheme=s; syncSchemeLabels();
+  if($('p-eval')&&$('p-eval').classList.contains('active'))renderEval();
+  else if($('p-post')&&$('p-post').classList.contains('active'))renderPost();
 }
 function askSetCurriculum(cur){
   setCurriculum(cur,true);
@@ -806,8 +821,8 @@ function evalStats(cols){
 }
 function evalHeadHTML(cols){
   if(!cols.length)
-    return `<tr><th class="c0">ลำดับ</th><th class="c1">รหัสนิสิต</th><th class="c2">ชื่อ-นามสกุล</th><th>รวม</th><th>เกรด</th></tr>`;
-  return `<tr><th class="c0" rowspan="4">ลำดับ</th><th class="c1" rowspan="4">รหัสนิสิต</th><th class="c2" rowspan="4">ชื่อ-นามสกุล</th>
+    return `<tr><th class="c0">ลำดับ</th><th class="c1">รหัสนิสิต</th><th class="c2">ชื่อ-นามสกุล</th><th>กลุ่ม/หมู่</th><th>รวม</th><th>เกรด</th></tr>`;
+  return `<tr><th class="c0" rowspan="4">ลำดับ</th><th class="c1" rowspan="4">รหัสนิสิต</th><th class="c2" rowspan="4">ชื่อ-นามสกุล</th><th rowspan="4">กลุ่ม/หมู่</th>
        ${cols.map(c=>`<th>PLO ${esc(c.plo).replace('PLO','').trim()}</th>`).join('')}
        <th rowspan="4">รวม</th><th rowspan="4">เกรด</th></tr>
      <tr>${cols.map(c=>`<th>CLO ${esc(c.cloNo)}</th>`).join('')}</tr>
@@ -817,10 +832,11 @@ function evalHeadHTML(cols){
 function studentRowHTML(st,si,cols){
   const tot=rowTotal(st,cols);
   const scoreTds=cols.map(c=>
-    `<td class="num-cell"><input type="number" value="${esc(st.scores[c._id])}" oninput="onScore(${si},${c._id},this.value)" style="width:62px"></td>`).join('');
+    `<td class="num-cell"><input type="number" value="${esc(st.scores[c._id]==null?'':st.scores[c._id])}" oninput="onScore(${si},${c._id},this.value)" style="width:62px"></td>`).join('');
   return `<tr id="strow-${si}"><td class="idx c0">${si+1}</td>
       <td class="c1"><input value="${esc(st.id)}" oninput="state.students[${si}].id=this.value" placeholder="รหัส" style="min-width:100px"></td>
       <td class="c2"><input value="${esc(st.name)}" oninput="state.students[${si}].name=this.value" placeholder="ชื่อ-นามสกุล" style="min-width:160px"></td>
+      <td><input value="${esc(st.group||'')}" oninput="state.students[${si}].group=this.value;scheduleGradeSummary()" placeholder="กลุ่ม" style="width:80px"></td>
       ${scoreTds}
       <td class="calc num-cell" id="tot-${si}"><b>${tot==null?'–':fmt(tot,2)}</b></td>
       <td class="calc grade-badge" id="grd-${si}">${gradeOf(tot)}</td>
@@ -828,13 +844,13 @@ function studentRowHTML(st,si,cols){
 }
 function evalFootHTML(cols,stats){
   if(!cols.length)return '';
-  const row=(label,vals)=>`<tr><td class="cf" colspan="3" style="text-align:right;font-weight:700">${label}</td>${vals.map(v=>`<td class="num-cell">${v}</td>`).join('')}<td colspan="2"></td></tr>`;
+  const row=(label,vals)=>`<tr><td class="cf" colspan="4" style="text-align:right;font-weight:700">${label}</td>${vals.map(v=>`<td class="num-cell">${v}</td>`).join('')}<td colspan="2"></td></tr>`;
   return row('Mean',stats.map(s=>fmt(s.mean)))+row('Min',stats.map(s=>fmt(s.mn)))+
          row('Max',stats.map(s=>fmt(s.mx)))+row('% ที่ได้รับ',stats.map(s=>fmt(s.pct,1)));
 }
 function updateEvalFooter(cols){$('evalfoot').innerHTML=evalFootHTML(cols,evalStats(cols));}
 function renderEval(){
-  setScheme(state.scheme);
+  syncSchemeLabels();
   const cols=evalCols();
   $('eval-head').innerHTML=`ภาค ${esc(state.meta.term)} ปี ${esc(state.meta.year)} · รหัสวิชา <b>${esc(state.meta.code)||'–'}</b> · ${esc(state.meta.name)||'–'}`;
   $('bulkcols').innerHTML = cols.length? ' · '+cols.map(c=>'คะแนน CLO '+(esc(c.cloNo)||'?')).join(' · ') : ' (ยังไม่มี CLO ให้กรอกคะแนน)';
@@ -844,6 +860,82 @@ function renderEval(){
   $('evalbody').innerHTML=state.students.map((st,si)=>studentRowHTML(st,si,cols)).join('');
   updateEvalFooter(cols);
   $('stcount').textContent=state.students.length;
+  renderGradeSummary(cols);
+}
+function gradeSummaryData(cols){
+  const rows=state.students.map(st=>({g:(st.group||'').trim(),tot:rowTotal(st,cols)})).filter(r=>r.tot!=null);
+  const mk=()=>{const c={};GRADE_ORDER.forEach(g=>c[g]=0);return c;};
+  const tally=list=>{const counts=mk();const tots=list.map(r=>r.tot);tots.forEach(t=>{const g=gradeOf(t);if(g in counts)counts[g]++;});
+    const n=tots.length,sum=tots.reduce((a,b)=>a+b,0);
+    return {n,counts,mean:n?sum/n:null,mn:n?Math.min(...tots):null,mx:n?Math.max(...tots):null,
+      pass:GRADE_ORDER.filter(g=>g!=='F').reduce((a,g)=>a+counts[g],0),fail:counts['F']||0};};
+  const overall=tally(rows);
+  const gnames=[...new Set(rows.map(r=>r.g))];
+  const hasGroups=gnames.some(g=>g!=='');
+  const groups={};
+  if(hasGroups){ gnames.sort((a,b)=>(a||'~').localeCompare(b||'~','th'))
+    .forEach(g=>{groups[g||'ไม่ระบุกลุ่ม']=tally(rows.filter(r=>r.g===g));}); }
+  return {overall,groups,hasGroups};
+}
+function renderGradeSummary(cols){
+  const box=$('grade-summary'); if(!box)return;
+  if(!cols.length){box.innerHTML='';return;}
+  const d=gradeSummaryData(cols); const o=d.overall;
+  if(!o.n){box.innerHTML='<div class="note-box" style="margin:0">ยังไม่มีคะแนนให้สรุป — กรอก/วางคะแนนของนิสิตก่อน</div>';return;}
+  const maxc=Math.max(1,...GRADE_ORDER.map(g=>o.counts[g]));
+  const bars=GRADE_ORDER.map(g=>{const c=o.counts[g];const h=Math.round(c/maxc*96);
+    return `<div class="gbar-col"><div class="gbar-n">${c}</div><div class="gbar-wrap"><div class="gbar ${g==='F'?'f':''}" style="height:${h}px"></div></div><div class="gbar-g">${g}</div><div class="gbar-p">${Math.round(c/o.n*100)}%</div></div>`;}).join('');
+  let groupTbl='';
+  if(d.hasGroups){
+    const gn=Object.keys(d.groups);
+    groupTbl=`<h4 style="margin:16px 0 6px;color:var(--teal-d)">เกรดแยกตามกลุ่ม/หมู่เรียน</h4>
+      <div class="tbl-scroll"><table><thead><tr><th>กลุ่ม/หมู่</th><th>นิสิต</th>${GRADE_ORDER.map(g=>`<th>${g}</th>`).join('')}<th>ผ่าน</th><th>ติด F</th><th>เฉลี่ย</th></tr></thead><tbody>${
+        gn.map(name=>{const s=d.groups[name];return `<tr><td><b>${esc(name)}</b></td><td style="text-align:center">${s.n}</td>${GRADE_ORDER.map(g=>`<td style="text-align:center">${s.counts[g]||''}</td>`).join('')}<td style="text-align:center;color:var(--good)">${s.pass}</td><td style="text-align:center;color:var(--bad)">${s.fail}</td><td style="text-align:center">${fmt(s.mean,2)}</td></tr>`;}).join('')
+      }</tbody></table></div>`;
+  }
+  box.innerHTML=`
+    <div class="card" style="margin:0;background:#fbfcfc">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px">
+        <h3 style="margin:0;color:var(--teal-d)">สรุปผลการเรียน <span class="aun">เกรดตามเกณฑ์ F &lt; ${state.scheme==='F50'?'50':'40'}</span></h3>
+        <button class="hbtn gold" style="border:none" onclick="exportGradeSummary()">⬇ ส่งออกสรุปเกรด (CSV)</button>
+      </div>
+      <p class="sub" style="margin:4px 0 12px">คำนวณจากคะแนนรวมของนิสิตที่มีคะแนน ${o.n} คน</p>
+      <div class="gbar-chart">${bars}</div>
+      <div class="grade-stat">
+        <span>คะแนนรวมเฉลี่ย: <b>${fmt(o.mean,2)}</b></span>
+        <span>ต่ำสุด: <b>${fmt(o.mn,2)}</b></span>
+        <span>สูงสุด: <b>${fmt(o.mx,2)}</b></span>
+        <span class="ok">ผ่าน (ไม่ติด F): <b>${o.pass}</b> คน</span>
+        <span class="bad">ติด F: <b>${o.fail}</b> คน</span>
+      </div>
+      ${groupTbl}
+    </div>`;
+}
+let _gsTimer=null;
+function scheduleGradeSummary(){ clearTimeout(_gsTimer); _gsTimer=setTimeout(()=>renderGradeSummary(evalCols()),350); }
+function exportGradeSummary(){
+  const cols=evalCols(); const d=gradeSummaryData(cols); const o=d.overall;
+  if(!o.n){toast('ยังไม่มีคะแนนให้ส่งออก');return;}
+  const q=s=>'"'+String(s==null?'':s).replace(/"/g,'""')+'"';
+  const L=[];
+  L.push([ 'สรุปผลการเรียน', state.meta.code||'', state.meta.name||'' ].map(q).join(','));
+  L.push([ 'ภาค', state.meta.term||'', 'ปี', state.meta.year||'', 'เกณฑ์', 'F<'+(state.scheme==='F50'?'50':'40') ].map(q).join(','));
+  L.push('');
+  L.push(['ภาพรวม','จำนวนนิสิต',o.n,'เฉลี่ย',fmt(o.mean,2),'ต่ำสุด',fmt(o.mn,2),'สูงสุด',fmt(o.mx,2),'ผ่าน',o.pass,'ติด F',o.fail].map(q).join(','));
+  L.push(['เกรด',...GRADE_ORDER].map(q).join(','));
+  L.push(['จำนวน (คน)',...GRADE_ORDER.map(g=>o.counts[g])].map(q).join(','));
+  L.push(['ร้อยละ',...GRADE_ORDER.map(g=>Math.round(o.counts[g]/o.n*100)+'%')].map(q).join(','));
+  if(d.hasGroups){
+    L.push(''); L.push([q('เกรดแยกตามกลุ่ม/หมู่เรียน')].join(','));
+    L.push(['กลุ่ม/หมู่','นิสิต',...GRADE_ORDER,'ผ่าน','ติด F','เฉลี่ย'].map(q).join(','));
+    Object.keys(d.groups).forEach(name=>{const s=d.groups[name];
+      L.push([name,s.n,...GRADE_ORDER.map(g=>s.counts[g]),s.pass,s.fail,fmt(s.mean,2)].map(q).join(','));});
+  }
+  const csv='\ufeff'+L.join('\r\n');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+  a.download='สรุปเกรด_'+(state.meta.code||'รายวิชา')+'.csv'; a.click();
+  toast('ดาวน์โหลดสรุปเกรดแล้ว');
 }
 function onScore(si,cloId,v){                 // update one cell — no full re-render (keeps focus)
   state.students[si].scores[cloId]=v;
@@ -852,6 +944,7 @@ function onScore(si,cloId,v){                 // update one cell — no full re-
   const tEl=$('tot-'+si); if(tEl)tEl.innerHTML='<b>'+(tot==null?'–':fmt(tot,2))+'</b>';
   const gEl=$('grd-'+si); if(gEl)gEl.textContent=gradeOf(tot);
   updateEvalFooter(cols);
+  scheduleGradeSummary();
 }
 function addStudent(){
   if(state.students.length>=MAX_STUDENTS){toast('สูงสุด '+MAX_STUDENTS+' คน');return;}
@@ -1004,7 +1097,7 @@ function openActFile(k,i){
   }catch(e){ toast('เปิดไฟล์ไม่สำเร็จ'); }
 }
 function renderPost(){
-  setScheme(state.scheme);
+  syncSchemeLabels();
   // activities
   $('postacts').innerHTML=Object.keys(state.post.acts).map(k=>{
     const a=state.post.acts[k];
