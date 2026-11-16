@@ -218,6 +218,7 @@
     <input type="file" id="loadfile" accept=".json" style="display:none" onchange="loadProject(event)">
     <button class="hbtn gold" onclick="exportExcel()">⬇ Excel</button>
     <button class="hbtn gold" onclick="exportWord()">⬇ Word</button>
+    <button class="hbtn gold" onclick="exportScoreForm()" title="ดาวน์โหลดสัดส่วนเกรดเป็นตาราง (ชื่อรายการคะแนน / คะแนนเต็ม / CLO / PLO) สำหรับคัดลอกไปวางในระบบอื่น">⬇ สัดส่วนเกรด</button>
     <button class="hbtn" onclick="submitCentral()" title="ส่งสำเนาข้อมูลรายวิชานี้เข้าระบบกลางของหน่วยงาน">☁ ส่งเข้าระบบกลาง</button>
     <button class="hbtn" onclick="openInbox()" title="ดูรายการรายวิชาที่ส่งเข้าระบบกลาง (แอดมินเห็นทั้งหมด)">📥 รายการที่ส่งเข้ามา</button>
   </div>
@@ -1615,6 +1616,25 @@ function exportExcel(){
   XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet(ps),'PostSemester F<'+(state.scheme==='F50'?'50':'40'));
   XLSX.writeFile(wb,(M.code||'รายวิชา')+'_AUN-QA.xlsx');
   toast('ส่งออก Excel แล้ว');
+}
+// ── ดาวน์โหลดสัดส่วนเกรดเป็นตาราง (เพื่อคัดลอกไปวางในระบบอื่น) — ไม่กระทบระบบเดิม ──
+function exportScoreForm(){
+  const M=state.meta;
+  // เรียงเป็นแถว ๆ ตามลำดับคอลัมน์ที่กำหนด
+  const aoa=[['ชื่อรายการคะแนน','คะแนนเต็ม','CLO','PLO']];
+  state.clos.forEach(c=>{
+    // เอาเฉพาะรายการที่มีชื่อเครื่องมือประเมินหรือมีคะแนน
+    if((c.tool&&c.tool.trim())||(c.weight!==''&&c.weight!=null)){
+      aoa.push([c.tool||'', c.weight||'', c.cloNo||'', c.plo||'']);
+    }
+  });
+  if(aoa.length===1){toast('ยังไม่มีข้อมูลสัดส่วนเกรดให้ส่งออก');return;}
+  const wb=XLSX.utils.book_new();
+  const ws=XLSX.utils.aoa_to_sheet(aoa);
+  ws['!cols']=[{wch:40},{wch:12},{wch:10},{wch:10}];
+  XLSX.utils.book_append_sheet(wb,ws,'สัดส่วนเกรด');
+  XLSX.writeFile(wb,(M.code||'รายวิชา')+'_สัดส่วนเกรด.xlsx');
+  toast('ดาวน์โหลดสัดส่วนเกรดแล้ว');
 }
 function tbl(headers,rows){
   return `<table border="1" cellspacing="0" cellpadding="4" style="border-collapse:collapse;width:100%;font-size:11pt">
